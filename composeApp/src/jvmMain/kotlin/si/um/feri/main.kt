@@ -5,7 +5,7 @@ import androidx.compose.ui.window.application
 
 fun main() {
     println("Izberi možnost:")
-    println("1 - prvi parser")
+    println("1 - parser parkirišč")
     println("2 - parser gostota")
     print("Vnos: ")
 
