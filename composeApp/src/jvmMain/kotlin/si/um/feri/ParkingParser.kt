@@ -10,23 +10,19 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import com.google.gson.Gson
 
 val shortTermParkingUrl = "https://prostor.maribor.si/ows/public/wfs?" +
-        "service=WFS&version=2.0.0&" +
-        "request=GetFeature" +
+        "service=WFS&version=2.0.0&request=GetFeature" +
         "&typeName=public:mom_parkirisca_kratkotrajna_l" +
-        "&outputFormat=application/json" +
-        "&srsName=EPSG:4326"
+        "&outputFormat=application/json&srsName=EPSG:4326"
 
 val paidParkingUrl = "https://prostor.maribor.si/ows/public/wfs?" +
         "service=WFS&version=2.0.0&request=GetFeature" +
         "&typeName=public:mom_parkirisca_cone_placilo_l" +
-        "&outputFormat=application/json" +
-        "&srsName=EPSG:4326"
+        "&outputFormat=application/json&srsName=EPSG:4326"
 
 val fencedParkingUrl = "https://prostor.maribor.si/ows/public/wfs?" +
         "service=WFS&version=2.0.0&request=GetFeature" +
         "&typeName=public:mom_parkirisca_ograjena_p" +
-        "&outputFormat=application/json" +
-        "&srsName=EPSG:4326"
+        "&outputFormat=application/json&srsName=EPSG:4326"
 
 data class Parking(
     val id: Int,
@@ -40,7 +36,6 @@ data class Parking(
 fun sendToApi(data: List<Parking>) {
     val client = OkHttpClient()
     val gson = Gson()
-
     val dtoList = data.map { p ->
         ParkingDto(
             id = p.id,
@@ -50,14 +45,12 @@ fun sendToApi(data: List<Parking>) {
             occupied = p.occupied
         )
     }
-
     val json = gson.toJson(dtoList)
     val body = json.toRequestBody("application/json; charset=utf-8".toMediaType())
     val request = Request.Builder()
         .url("http://localhost:3000/api/parking/sync")
         .post(body)
         .build()
-
     try {
         client.newCall(request).execute().use { response ->
             if (response.isSuccessful) println("Data successfully sent to API!")
@@ -79,12 +72,10 @@ fun parseStreetParking(jsonString: String, isPaid: Boolean): List<Parking> {
     val parkingList = mutableListOf<Parking>()
     val allData = JSONObject(jsonString)
     val features = allData.getJSONArray("features")
-
     for (i in 0 until features.length()) {
         val item = features.getJSONObject(i)
         val properties = item.getJSONObject("properties")
         val geometry = item.getJSONObject("geometry")
-
         val polyline = mutableListOf<Pair<Double, Double>>()
         if (geometry.has("coordinates")) {
             val coordLevels = geometry.getJSONArray("coordinates")
@@ -96,13 +87,10 @@ fun parseStreetParking(jsonString: String, isPaid: Boolean): List<Parking> {
                 }
             }
         }
-
         var cap = properties.optString("stevilo_pm", "0").toIntOrNull() ?: 0
         if (cap <= 0) cap = (10..40).random()
         val occ = (0..cap).random()
-
         val streetName = properties.optString("lokacija", properties.optString("ulica", "Unknown Location"))
-
         parkingList.add(
             Parking(
                 id = item.getString("id").hashCode(),
@@ -121,12 +109,10 @@ fun parseFencedParking(jsonString: String): List<Parking> {
     val parkingList = mutableListOf<Parking>()
     val allData = JSONObject(jsonString)
     val features = allData.getJSONArray("features")
-
     for (i in 0 until features.length()) {
         val item = features.getJSONObject(i)
         val properties = item.getJSONObject("properties")
         val geometry = item.getJSONObject("geometry")
-
         val points = mutableListOf<Pair<Double, Double>>()
         val coordinates = geometry.getJSONArray("coordinates")
         val ring = coordinates.getJSONArray(0)
@@ -134,11 +120,9 @@ fun parseFencedParking(jsonString: String): List<Parking> {
             val coord = ring.getJSONArray(k)
             points.add(Pair(coord.getDouble(1), coord.getDouble(0)))
         }
-
         var cap = properties.optString("st_park_m", "0").toIntOrNull() ?: 0
         if (cap <= 0) cap = (50..150).random()
         val occ = (0..(cap / 2)).random()
-
         parkingList.add(
             Parking(
                 id = item.getString("id").hashCode(),
@@ -155,26 +139,19 @@ fun parseFencedParking(jsonString: String): List<Parking> {
 
 fun runParser() {
     System.setOut(java.io.PrintStream(System.`out`, true, "UTF-8"))
-
     try {
         println("Downloading parking data for Maribor")
-
         val rawShortTerm = downloadData(shortTermParkingUrl)
         val shortTermList = parseStreetParking(rawShortTerm, false)
-
         val rawPaid = downloadData(paidParkingUrl)
         val paidList = parseStreetParking(rawPaid, true)
-
         val rawFenced = downloadData(fencedParkingUrl)
         val fencedList = parseFencedParking(rawFenced)
-
         val allTogether = shortTermList + paidList + fencedList
         println("Total locations found: ${allTogether.size}")
-
         if (allTogether.isNotEmpty()) {
             sendToApi(allTogether)
         }
-
     } catch (e: Exception) {
         println("ERROR: ${e.message}")
         e.printStackTrace()

@@ -17,3 +17,12 @@ captures
 !*.xcworkspace/contents.xcworkspacedata
 **/xcshareddata/WorkspaceSettings.xcsettings
 node_modules/
+package-lock.json
+npm-debug.log*
+yarn-debug.log*
+.env
+*.class
+*.pyc
+.gradle/
+*.log
+Thumbs.db
