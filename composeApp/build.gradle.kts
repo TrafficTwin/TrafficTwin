@@ -32,7 +32,7 @@ kotlin {
             implementation("com.fleeksoft.ksoup:ksoup-network:0.2.6")
             implementation("org.json:json:20231013")
             implementation(compose.materialIconsExtended)
-
+            implementation("com.microsoft.playwright:playwright:1.59.0")
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
