@@ -75,4 +75,56 @@ app.delete('/api/parking', async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// -------------------- STANJE CEST --------------------
+
+const roadCol = () => db.collection('road_states');
+
+app.get('/api/stanje-cest', async (req, res) => {
+    try {
+        const data = await roadCol()
+            .find({}, { projection: { _id: 0 } })
+            .toArray();
+
+        res.json(data);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/stanje-cest/sync', async (req, res) => {
+    try {
+        if (!Array.isArray(req.body)) {
+            return res.status(400).json({ error: "Pričakovan je seznam stanj cest." });
+        }
+
+        console.log("Sinhroniziram stanje cest: " + req.body.length + " zapisov...");
+
+        await roadCol().deleteMany({});
+
+        const docs = req.body.map(item => ({
+            tip: item.tip ?? "",
+            relacija: item.relacija ?? "",
+            stanje: item.stanje ?? "",
+            lastUpdated: new Date()
+        }));
+
+        if (docs.length > 0) {
+            await roadCol().insertMany(docs);
+        }
+
+        res.json({ message: "Sinhronizirano " + docs.length + " zapisov stanja cest." });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.delete('/api/stanje-cest', async (req, res) => {
+    try {
+        await roadCol().deleteMany({});
+        res.json({ message: "Stanje cest izbrisano." });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.listen(3000, () => console.log("Streznik tece na http://localhost:3000"));
