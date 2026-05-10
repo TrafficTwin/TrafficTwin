@@ -39,7 +39,6 @@ fun App() {
 
     // Podatki za stanje cest
     var roadStates by remember { mutableStateOf(listOf<StanjeCeste>()) }
-    var savedRoadStates by remember { mutableStateOf(listOf<StanjeCeste>()) }
     var editingRoadIndex by remember { mutableStateOf<Int?>(null) }
 
     MaterialTheme {
@@ -358,7 +357,17 @@ fun App() {
                     StanjeCestScreen(
                         roadStates = roadStates,
                         onRefresh = {
-                            roadStates = savedRoadStates
+                            scope.launch {
+                                val result = withContext(Dispatchers.IO) {
+                                    runCatching {
+                                        StanjeApi.getAll()
+                                    }.getOrElse {
+                                        emptyList()
+                                    }
+                                }
+
+                                roadStates = result
+                            }
                         },
                         onImport = {
                             scope.launch {
@@ -374,7 +383,18 @@ fun App() {
                             }
                         },
                         onSave = {
-                            savedRoadStates = roadStates
+                            scope.launch {
+                                val result = withContext(Dispatchers.IO) {
+                                    runCatching {
+                                        StanjeApi.sync(roadStates)
+                                        StanjeApi.getAll()
+                                    }.getOrElse {
+                                        roadStates
+                                    }
+                                }
+
+                                roadStates = result
+                            }
                         },
                         onEdit = { index ->
                             editingRoadIndex = index
