@@ -6,7 +6,7 @@ import androidx.compose.ui.window.application
 fun main() {
     println("Izberi možnost:")
     println("1 - parser parkirišč")
-    println("2 - parser gostota")
+    println("2 - parser stanja na cestah")
     print("Vnos: ")
 
     when (readln()) {
@@ -16,8 +16,8 @@ fun main() {
         }
 
         "2" -> {
-            println("Zagnal se bo parser gostota")
-            parserGostota()
+            println("Zagnal se bo parser stanja")
+            parserStanje()
         }
 
         else -> {
