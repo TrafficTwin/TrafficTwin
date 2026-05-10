@@ -26,7 +26,7 @@ fun App() {
     var parkingLots by remember { mutableStateOf(listOf<ParkingDto>()) }
     var searchQuery by remember { mutableStateOf("") }
 
-    // Stanja za generator namišljenih podatkov
+    // Stanja za generator namišljenih podatkov parkirišč
     var countInput by remember { mutableStateOf("1") }
     var minCap by remember { mutableStateOf("10") }
     var maxCap by remember { mutableStateOf("150") }
@@ -71,7 +71,6 @@ fun App() {
                 }
 
                 if (selectedPage == 0) {
-                    // ISKANJE
                     TextField(
                         value = searchQuery,
                         onValueChange = { searchQuery = it },
@@ -82,7 +81,6 @@ fun App() {
                         }
                     )
 
-                    // GLAVNA VRSTICA Z GUMBI
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -122,9 +120,9 @@ fun App() {
                                 onDismissRequest = { showSortMenu = false }
                             ) {
                                 DropdownMenuItem(
-                                    text = { Text("Abecedno (A-Z)") },
+                                    text = { Text("Abecedno A-Ž") },
                                     onClick = {
-                                        parkingLots = parkingLots.sortedBy { it.location }
+                                        parkingLots = parkingLots.sortedBy { it.location.lowercase() }
                                         showSortMenu = false
                                     }
                                 )
@@ -141,7 +139,6 @@ fun App() {
                             }
                         }
 
-                        // Uvozi podatke preko parserja
                         Button(
                             onClick = {
                                 scope.launch {
@@ -165,7 +162,6 @@ fun App() {
                             Text("Uvozi MB")
                         }
 
-                        // Shrani trenutno stanje v bazo preko API
                         Button(
                             onClick = {
                                 scope.launch {
@@ -189,19 +185,6 @@ fun App() {
                             Text("Shrani")
                         }
                     }
-
-                    // Testni gumb za promet
-                    /*Button(
-                        onClick = {
-                            scope.launch {
-                                withContext(Dispatchers.IO) {
-                                    parserGostota()
-                                }
-                            }
-                        }
-                    ) {
-                        Text("Test promet")
-                    }*/
 
                     Card(
                         modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
@@ -262,12 +245,10 @@ fun App() {
                         }
                     }
 
-                    // Filtriranje seznama glede na vnos v iskalnik
                     val filteredLots = parkingLots.filter {
                         it.location.contains(searchQuery, ignoreCase = true)
                     }
 
-                    // GLAVNI SEZNAM PARKIRIŠČ
                     LazyColumn(modifier = Modifier.fillMaxWidth().weight(1f)) {
                         items(filteredLots) { lot ->
                             Card(
@@ -300,7 +281,6 @@ fun App() {
                                                 0f
                                             }
 
-                                        // Indikator zasedenosti
                                         LinearProgressIndicator(
                                             progress = { ratio.coerceIn(0f, 1f) },
                                             modifier = Modifier
@@ -317,7 +297,6 @@ fun App() {
                                         )
                                     }
 
-                                    // Gumb za urejanje
                                     IconButton(onClick = { editingParking = lot }) {
                                         Icon(
                                             Icons.Default.Edit,
@@ -326,7 +305,6 @@ fun App() {
                                         )
                                     }
 
-                                    // Gumb za brisanje
                                     IconButton(
                                         onClick = {
                                             scope.launch {
@@ -382,6 +360,10 @@ fun App() {
                                 roadStates = result
                             }
                         },
+                        onGenerate = {
+                            val generated = generateFakeStanjeCest(10)
+                            roadStates = roadStates + generated
+                        },
                         onSave = {
                             scope.launch {
                                 val result = withContext(Dispatchers.IO) {
@@ -407,7 +389,6 @@ fun App() {
             }
         }
 
-        // DIALOG ZA UREJANJE PARKIRIŠČA
         editingParking?.let { parking ->
             var editLoc by remember(parking.id) { mutableStateOf(parking.location) }
             var editCap by remember(parking.id) { mutableStateOf(parking.capacity.toString()) }
@@ -476,7 +457,6 @@ fun App() {
             )
         }
 
-        // DIALOG ZA UREJANJE STANJA CEST
         editingRoadIndex?.let { index ->
             val road = roadStates.getOrNull(index)
 
@@ -544,6 +524,7 @@ fun StanjeCestScreen(
     roadStates: List<StanjeCeste>,
     onRefresh: () -> Unit,
     onImport: () -> Unit,
+    onGenerate: () -> Unit,
     onSave: () -> Unit,
     onEdit: (Int) -> Unit,
     onDelete: (Int) -> Unit
@@ -567,7 +548,6 @@ fun StanjeCestScreen(
         }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        // ISKANJE
         TextField(
             value = searchRoadQuery,
             onValueChange = { searchRoadQuery = it },
@@ -578,7 +558,6 @@ fun StanjeCestScreen(
             }
         )
 
-        // GLAVNA VRSTICA Z GUMBI
         Row(
             modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -640,6 +619,14 @@ fun StanjeCestScreen(
             }
 
             Button(
+                onClick = onGenerate,
+                modifier = Modifier.weight(1f),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF9C27B0))
+            ) {
+                Text("Generiraj")
+            }
+
+            Button(
                 onClick = onSave,
                 modifier = Modifier.weight(1f),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
@@ -650,7 +637,7 @@ fun StanjeCestScreen(
 
         if (roadStates.isEmpty()) {
             Text(
-                text = "Ni podatkov. Klikni 'Uvozi stanje'.",
+                text = "Ni podatkov. Klikni 'Uvozi stanje' ali 'Generiraj'.",
                 modifier = Modifier.padding(8.dp)
             )
         } else if (filteredRoads.isEmpty()) {
@@ -665,7 +652,6 @@ fun StanjeCestScreen(
                 fontWeight = FontWeight.Bold
             )
 
-            // GLAVNI SEZNAM STANJA CEST
             LazyColumn(modifier = Modifier.fillMaxWidth().weight(1f)) {
                 items(filteredRoads) { indexedRoad ->
                     val index = indexedRoad.index
@@ -723,8 +709,12 @@ fun StanjeCestScreen(
 fun generateAdvancedFake(count: Int, min: Int, max: Int): List<ParkingDto> {
     val faker = Faker()
 
-    return List(count) {
-        val cap = (min..max).random()
+    val safeCount = count.coerceAtLeast(0)
+    val safeMin = min.coerceAtLeast(1)
+    val safeMax = max.coerceAtLeast(safeMin)
+
+    return List(safeCount) {
+        val cap = (safeMin..safeMax).random()
 
         ParkingDto(
             id = (10000..999999).random(),
@@ -732,6 +722,46 @@ fun generateAdvancedFake(count: Int, min: Int, max: Int): List<ParkingDto> {
             capacity = cap,
             occupied = (0..cap).random(),
             typeOfPayment = if ((0..1).random() == 0) "FREE" else "PAYABLE"
+        )
+    }
+}
+
+fun generateFakeStanjeCest(count: Int): List<StanjeCeste> {
+    val faker = Faker()
+
+    val tipiCest = listOf(
+        "AC",
+        "HC",
+        "G1",
+        "G2",
+        "R1",
+        "R2",
+        "LC"
+    )
+
+    val stanja = listOf(
+        "Normalen promet",
+        "Zastoj",
+        "Dela na cesti",
+        "Zapora ceste",
+        "Omejen promet",
+        "Prometna nesreča",
+        "Povečana gostota prometa",
+        "Spolzko vozišče",
+        "Megla",
+        "Sneg na cesti"
+    )
+
+    val safeCount = count.coerceAtLeast(0)
+
+    return List(safeCount) {
+        val kraj1 = faker.address.city()
+        val kraj2 = faker.address.city()
+
+        StanjeCeste(
+            tip = tipiCest.random(),
+            relacija = "$kraj1 - $kraj2",
+            stanje = stanja.random()
         )
     }
 }
