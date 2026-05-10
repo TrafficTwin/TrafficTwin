@@ -23,6 +23,8 @@ kotlin {
             implementation("com.fleeksoft.ksoup:ksoup:0.2.6")
             implementation("com.fleeksoft.ksoup:ksoup-kotlinx:0.2.6")
             implementation("com.fleeksoft.ksoup:ksoup-network:0.2.6")
+            implementation("it.skrape:skrapeit:1.1.5")
+            implementation("com.microsoft.playwright:playwright:1.59.0")
             implementation("org.json:json:20231013")
         }
         commonTest.dependencies {
