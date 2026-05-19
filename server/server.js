@@ -9,6 +9,7 @@ app.use(cors());
 app.use(express.json());
 
 const client = new MongoClient('mongodb://127.0.0.1:27017');
+
 let db;
 
 async function connect() {
@@ -29,13 +30,27 @@ const wss = new WebSocket.Server({
     path: '/ws'
 });
 
+function createWsPayload(data) {
+    return JSON.stringify({
+        ...data,
+        sentAt: new Date().toISOString()
+    });
+}
+
 function sendJson(ws, data) {
     if (ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({
-            ...data,
-            sentAt: new Date().toISOString()
-        }));
+        ws.send(createWsPayload(data));
     }
+}
+
+function broadcastJson(data) {
+    const payload = createWsPayload(data);
+
+    wss.clients.forEach(ws => {
+        if (ws.readyState === WebSocket.OPEN) {
+            ws.send(payload);
+        }
+    });
 }
 
 async function getParkingSnapshot() {
@@ -50,6 +65,19 @@ async function getRoadSnapshot() {
         .toArray();
 }
 
+async function getFullSnapshotPayload() {
+    const [parkings, roads] = await Promise.all([
+        getParkingSnapshot(),
+        getRoadSnapshot()
+    ]);
+
+    return {
+        type: "snapshot",
+        parkings,
+        roads
+    };
+}
+
 async function sendFullSnapshot(ws) {
     if (!db) {
         sendJson(ws, {
@@ -59,16 +87,41 @@ async function sendFullSnapshot(ws) {
         return;
     }
 
-    const [parkings, roads] = await Promise.all([
-        getParkingSnapshot(),
-        getRoadSnapshot()
-    ]);
+    const payload = await getFullSnapshotPayload();
+    sendJson(ws, payload);
+}
 
-    sendJson(ws, {
-        type: "snapshot",
-        parkings,
-        roads
+async function broadcastFullSnapshot(reason) {
+    if (!db) {
+        return;
+    }
+
+    const payload = await getFullSnapshotPayload();
+
+    broadcastJson({
+        ...payload,
+        reason
     });
+}
+
+async function broadcastParkingEvent(type, data = {}) {
+    broadcastJson({
+        type,
+        resource: "parking",
+        ...data
+    });
+
+    await broadcastFullSnapshot(type);
+}
+
+async function broadcastTrafficEvent(type, data = {}) {
+    broadcastJson({
+        type,
+        resource: "traffic",
+        ...data
+    });
+
+    await broadcastFullSnapshot(type);
 }
 
 wss.on('connection', async ws => {
@@ -137,7 +190,20 @@ app.get('/api/parking', async (req, res) => {
 
 app.post('/api/parking', async (req, res) => {
     try {
-        await col().insertOne(req.body);
+        const doc = {
+            ...req.body,
+            lastUpdated: new Date()
+        };
+
+        await col().insertOne(doc);
+
+        await broadcastParkingEvent("parking:created", {
+            parking: {
+                ...doc,
+                _id: undefined
+            }
+        });
+
         res.status(201).json({ message: "Dodano." });
     } catch (err) {
         if (err.code === 11000) {
@@ -167,6 +233,10 @@ app.post('/api/parking/sync', async (req, res) => {
             await col().insertMany(docs);
         }
 
+        await broadcastParkingEvent("parking:synced", {
+            count: docs.length
+        });
+
         res.json({ message: "Sinhronizirano " + docs.length + " zapisov." });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -186,12 +256,20 @@ app.put('/api/parking/:id', async (req, res) => {
                     lastUpdated: new Date()
                 }
             },
-            { returnDocument: 'after' }
+            {
+                returnDocument: 'after',
+                projection: { _id: 0 }
+            }
         );
 
         if (!result) {
             return res.status(404).json({ error: "Ni najdeno." });
         }
+
+        await broadcastParkingEvent("parking:updated", {
+            id,
+            parking: result
+        });
 
         res.json({ message: "Posodobljeno." });
     } catch (err) {
@@ -203,11 +281,19 @@ app.delete('/api/parking/:id', async (req, res) => {
     try {
         const id = parseInt(req.params.id);
 
-        const result = await col().findOneAndDelete({ id });
+        const result = await col().findOneAndDelete(
+            { id },
+            { projection: { _id: 0 } }
+        );
 
         if (!result) {
             return res.status(404).json({ error: "Ni najdeno." });
         }
+
+        await broadcastParkingEvent("parking:deleted", {
+            id,
+            parking: result
+        });
 
         res.json({ message: "Izbrisano." });
     } catch (err) {
@@ -217,14 +303,19 @@ app.delete('/api/parking/:id', async (req, res) => {
 
 app.delete('/api/parking', async (req, res) => {
     try {
-        await col().deleteMany({});
+        const result = await col().deleteMany({});
+
+        await broadcastParkingEvent("parking:cleared", {
+            deletedCount: result.deletedCount
+        });
+
         res.json({ message: "Baza izpraznjena." });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
 
-// -------------------- STANJE CEST --------------------
+// -------------------- STANJE CEST / PROMETNI UPDATE --------------------
 
 app.get('/api/stanje-cest', async (req, res) => {
     try {
@@ -256,6 +347,16 @@ app.post('/api/stanje-cest/sync', async (req, res) => {
             await roadCol().insertMany(docs);
         }
 
+        await broadcastTrafficEvent("traffic:synced", {
+            count: docs.length,
+            roads: docs.map(item => ({
+                tip: item.tip,
+                relacija: item.relacija,
+                stanje: item.stanje,
+                lastUpdated: item.lastUpdated
+            }))
+        });
+
         res.json({ message: "Sinhronizirano " + docs.length + " zapisov stanja cest." });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -264,7 +365,12 @@ app.post('/api/stanje-cest/sync', async (req, res) => {
 
 app.delete('/api/stanje-cest', async (req, res) => {
     try {
-        await roadCol().deleteMany({});
+        const result = await roadCol().deleteMany({});
+
+        await broadcastTrafficEvent("traffic:cleared", {
+            deletedCount: result.deletedCount
+        });
+
         res.json({ message: "Stanje cest izbrisano." });
     } catch (err) {
         res.status(500).json({ error: err.message });
