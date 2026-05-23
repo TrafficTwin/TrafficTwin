@@ -6,18 +6,29 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const client = new MongoClient('mongodb://127.0.0.1:27017');
+const mongoUri = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017';
+const client = new MongoClient(mongoUri);
 let db;
 
-async function connect() {
-    await client.connect();
-    db = client.db('traffic_twin');
-    console.log("Povezan z MongoDB");
+const col = () => {
+    if (!db) {
+        throw new Error("Baza podatkov se ni pripravljena.");
+    }
+    return db.collection('parkings');
+};
+
+async function startServer() {
+    try {
+        await client.connect();
+        db = client.db('traffic_twin');
+        app.listen(3000, () => console.log("Streznik tece na http://localhost:3000"));
+    } catch (err) {
+        console.error(err);
+        process.exit(1);
+    }
 }
 
-connect().catch(err => console.error("Napaka pri povezavi:", err));
-
-const col = () => db.collection('parkings');
+startServer();
 
 app.get('/api/parking', async (req, res) => {
     try {
@@ -38,7 +49,6 @@ app.post('/api/parking', async (req, res) => {
 
 app.post('/api/parking/sync', async (req, res) => {
     try {
-        console.log("Sinhroniziram " + req.body.length + " zapisov...");
         await col().deleteMany({});
         const docs = req.body.map(item => ({ ...item, lastUpdated: new Date() }));
         await col().insertMany(docs);
@@ -74,5 +84,3 @@ app.delete('/api/parking', async (req, res) => {
         res.json({ message: "Baza izpraznjena." });
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
-
-app.listen(3000, () => console.log("Streznik tece na http://localhost:3000"));
