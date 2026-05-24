@@ -18,7 +18,7 @@ object ParkingApi {
     private val client = OkHttpClient()
     private val gson = Gson()
     private val JSON = "application/json; charset=utf-8".toMediaType()
-    private const val BASE = "http://127.0.0.1:3000"
+    private val BASE: String get() = ApiConfig.baseUrl
 
     fun getAll(): List<ParkingDto> {
         val req = Request.Builder().url("$BASE/api/parking").get().build()

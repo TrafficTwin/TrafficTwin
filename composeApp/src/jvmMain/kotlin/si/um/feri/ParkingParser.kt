@@ -48,7 +48,7 @@ fun sendToApi(data: List<Parking>) {
     val json = gson.toJson(dtoList)
     val body = json.toRequestBody("application/json; charset=utf-8".toMediaType())
     val request = Request.Builder()
-        .url("http://localhost:3000/api/parking/sync")
+        .url("${ApiConfig.baseUrl}/api/parking/sync")
         .post(body)
         .build()
     try {
