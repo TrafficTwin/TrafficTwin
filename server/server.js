@@ -1,8 +1,9 @@
-﻿const express = require('express');
+const express = require('express');
 const { MongoClient } = require('mongodb');
 const cors = require('cors');
 const http = require('http');
 const WebSocket = require('ws');
+require('dotenv').config();
 
 const app = express();
 app.use(cors());
@@ -10,6 +11,15 @@ app.use(express.json());
 
 const mongoUri = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017';
 const client = new MongoClient(mongoUri);
+
+const PORT = process.env.PORT || 3000;
+
+const server = http.createServer(app);
+
+const wss = new WebSocket.Server({
+    server,
+    path: '/ws'
+});
 
 let db;
 
@@ -22,13 +32,6 @@ const roadCol = () => {
     if (!db) throw new Error("Baza podatkov še ni pripravljena.");
     return db.collection('road_states');
 };
-
-const server = http.createServer(app);
-
-const wss = new WebSocket.Server({
-    server,
-    path: '/ws'
-});
 
 function createWsPayload(data) {
     return JSON.stringify({
@@ -280,20 +283,21 @@ app.delete('/api/stanje-cest', async (req, res) => {
     }
 });
 
-// Spremenjeno: Asinhroni zagon strežnika ŠELE PO uspešni povezavi z bazo
 async function startServer() {
     try {
         await client.connect();
         db = client.db('traffic_twin');
         console.log("Uspešno povezan z MongoDB Atlas.");
         
-        server.listen(3000, () => {
-            console.log("Strežnik teče na http://localhost:3000");
-            console.log("WebSocket teče na ws://localhost:3000/ws");
+        const publicUrl = process.env.PUBLIC_URL || "localhost";
+        
+        server.listen(PORT, () => {
+            console.log("Strežnik teče na portu " + PORT);
+            console.log("WebSocket teče na ws://" + publicUrl + ":" + PORT + "/ws");
         });
     } catch (err) {
         console.error("Kritična napaka pri povezavi z bazo:", err);
-        process.exit(1); // Takoj vgasne Docker kontejner, če so prijavni podatki napačni
+        process.exit(1);
     }
 }
 

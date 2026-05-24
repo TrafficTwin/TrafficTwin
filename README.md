@@ -60,3 +60,17 @@ Ime brancha naj bo v obliki:
 dev_idtaska
 ```
 Ta branch pushamo na repozitorij in naredimo pull request na branch dev.
+
+## Delo na novem tasku
+
+Za zagon strežnika je potrebno zagnati naslednje ukaze:
+
+``` docker build -t traffictwin .```
+``` docker run -d -p 3000:3000 -e MONGO_URI="mongodb+srv://TafficTwin_db_user:geslo@cluster54.xxxx.mongodb.net/traffic_twin" --name myServer traffictwin```
+
+## Navodila za zagon Dockerja
+``` docker-compose up: ``` zagon 
+
+``` docker-compose down ``` zaustavitev in odstranitev kontejnerja
+
+``` docker-compose stop ``` zaustavitev kontejnerja
