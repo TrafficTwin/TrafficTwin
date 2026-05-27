@@ -721,7 +721,9 @@ fun generateAdvancedFake(count: Int, min: Int, max: Int): List<ParkingDto> {
             location = faker.address.streetName(),
             capacity = cap,
             occupied = (0..cap).random(),
-            typeOfPayment = if ((0..1).random() == 0) "FREE" else "PAYABLE"
+            typeOfPayment = if ((0..1).random() == 0) "FREE" else "PAYABLE",
+            latitude = (465000..466200).random() / 10000.0,
+            longitude = (155800..157200).random() / 10000.0
         )
     }
 }
