@@ -1,0 +1,22 @@
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb_container
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+  app:
+    build: ./server  
+    container_name: traffic_twin_app
+    ports:
+      - "3000:3000"
+    environment:
+      - MONGO_URI=mongodb://mongodb:27017/traffic_twin
+      - API_URL=http://localhost:3000
+    depends_on:
+      - mongodb
+
+volumes:
+  mongo-data:
