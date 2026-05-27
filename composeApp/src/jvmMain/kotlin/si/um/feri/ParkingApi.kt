@@ -13,7 +13,8 @@ data class ParkingDto(
     val capacity: Int,
     val occupied: Int = 0,
     val latitude: Double? = null,
-    val longitude: Double? = null
+    val longitude: Double? = null,
+    val distanceMeters: Double? = null
 )
 
 object ParkingApi {
@@ -61,4 +62,15 @@ object ParkingApi {
         latitude = p.latitude,
         longitude = p.longitude
     )
+
+    fun getNearby(latitude: Double, longitude: Double, radiusMeters: Int): List<ParkingDto> {
+        val req = Request.Builder()
+            .url("$BASE/api/parking/nearby?lat=$latitude&lon=$longitude&radius=$radiusMeters")
+            .get()
+            .build()
+
+        val body = client.newCall(req).execute().use { it.body!!.string() }
+        val type = object : TypeToken<List<ParkingDto>>() {}.type
+        return gson.fromJson(body, type)
+    }
 }
