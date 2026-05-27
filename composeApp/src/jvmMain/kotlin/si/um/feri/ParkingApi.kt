@@ -11,7 +11,9 @@ data class ParkingDto(
     val location: String,
     val typeOfPayment: String,
     val capacity: Int,
-    val occupied: Int = 0
+    val occupied: Int = 0,
+    val latitude: Double? = null,
+    val longitude: Double? = null
 )
 
 object ParkingApi {
@@ -55,6 +57,8 @@ object ParkingApi {
         location = p.location,
         typeOfPayment = p.typeOfPayment,
         capacity = p.capacity,
-        occupied = occupied
+        occupied = occupied,
+        latitude = p.latitude,
+        longitude = p.longitude
     )
 }
