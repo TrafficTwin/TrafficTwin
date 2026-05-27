@@ -199,6 +199,44 @@ app.get('/api/parking', async (req, res) => {
     }
 });
 
+app.get('/api/parking/nearby', async (req, res) => {
+    try {
+        const latitude = toNumber(req.query.lat);
+        const longitude = toNumber(req.query.lon);
+        const radiusMeters = Math.min(toNumber(req.query.radius) ?? 1000, 20000);
+
+        if (!hasValidCoordinates(latitude, longitude)) {
+            return res.status(400).json({
+                error: "Manjkajo ali niso veljavne koordinate lat/lon."
+            });
+        }
+
+        const data = await col().aggregate([
+            {
+                $geoNear: {
+                    near: {
+                        type: 'Point',
+                        coordinates: [longitude, latitude]
+                    },
+                    distanceField: 'distanceMeters',
+                    maxDistance: Math.max(radiusMeters, 1),
+                    spherical: true,
+                    query: {
+                        locationGeo: { $exists: true }
+                    }
+                }
+            },
+            {
+                $project: parkingProjection
+            }
+        ]).toArray();
+
+        res.json(data);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.post('/api/parking', async (req, res) => {
     try {
         const doc = normalizeParkingDoc(req.body);
