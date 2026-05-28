@@ -41,6 +41,11 @@ fun App() {
     var roadStates by remember { mutableStateOf(listOf<StanjeCeste>()) }
     var editingRoadIndex by remember { mutableStateOf<Int?>(null) }
 
+    //GeoJSON
+    var latitudeInput by remember { mutableStateOf("46.5547") }
+    var longitudeInput by remember { mutableStateOf("15.6459") }
+    var radiusInput by remember { mutableStateOf("1000") }
+
     MaterialTheme {
         Surface(
             modifier = Modifier.fillMaxSize(),
@@ -80,6 +85,59 @@ fun App() {
                             Icon(Icons.Default.Search, contentDescription = null)
                         }
                     )
+
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        TextField(
+                            value = latitudeInput,
+                            onValueChange = { latitudeInput = it },
+                            label = { Text("Lat") },
+                            modifier = Modifier.weight(1f)
+                        )
+
+                        TextField(
+                            value = longitudeInput,
+                            onValueChange = { longitudeInput = it },
+                            label = { Text("Lon") },
+                            modifier = Modifier.weight(1f)
+                        )
+
+                        TextField(
+                            value = radiusInput,
+                            onValueChange = { radiusInput = it },
+                            label = { Text("Radij m") },
+                            modifier = Modifier.weight(1f)
+                        )
+
+                        Button(
+                            onClick = {
+                                val lat = latitudeInput.toDoubleOrNull()
+                                val lon = longitudeInput.toDoubleOrNull()
+                                val radius = radiusInput.toIntOrNull() ?: 1000
+
+                                if (lat != null && lon != null) {
+                                    scope.launch {
+                                        val result = withContext(Dispatchers.IO) {
+                                            runCatching {
+                                                ParkingApi.getNearby(lat, lon, radius)
+                                            }.getOrNull()
+                                        }
+
+                                        if (result != null) {
+                                            parkingLots = result
+                                        }
+                                    }
+                                }
+                            },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("V bližini")
+                        }
+                    }
 
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
@@ -132,6 +190,16 @@ fun App() {
                                     onClick = {
                                         parkingLots = parkingLots.sortedByDescending {
                                             it.capacity - it.occupied
+                                        }
+                                        showSortMenu = false
+                                    }
+                                )
+
+                                DropdownMenuItem(
+                                    text = { Text("Najbližje") },
+                                    onClick = {
+                                        parkingLots = parkingLots.sortedBy {
+                                            it.distanceMeters ?: Double.MAX_VALUE
                                         }
                                         showSortMenu = false
                                     }
@@ -273,6 +341,20 @@ fun App() {
                                             text = "Prosto: $availableSpaces / ${lot.capacity} (${lot.typeOfPayment})",
                                             style = MaterialTheme.typography.bodyMedium
                                         )
+
+                                        if (lot.latitude != null && lot.longitude != null) {
+                                            Text(
+                                                text = "Koordinate: ${"%.5f".format(lot.latitude)}, ${"%.5f".format(lot.longitude)}",
+                                                style = MaterialTheme.typography.bodySmall
+                                            )
+                                        }
+
+                                        lot.distanceMeters?.let { distance ->
+                                            Text(
+                                                text = "Oddaljenost: ${"%.0f".format(distance)} m",
+                                                style = MaterialTheme.typography.bodySmall
+                                            )
+                                        }
 
                                         val ratio =
                                             if (lot.capacity > 0) {
