@@ -123,3 +123,132 @@ button {
     color: #64748b;
     font-size: 13px;
 }
+
+.toolbar {
+    display: grid;
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+    gap: 10px;
+    background: white;
+    padding: 16px;
+    border-radius: 18px;
+    box-shadow: 0 12px 35px rgba(15, 23, 42, 0.08);
+}
+
+.toolbar input,
+.toolbar select,
+.dialog input {
+    border: 1px solid #dbe3ef;
+    border-radius: 12px;
+    padding: 10px 12px;
+    background: white;
+}
+
+button {
+    border: 0;
+    border-radius: 12px;
+    padding: 10px 14px;
+    background: #e2e8f0;
+    color: #172033;
+}
+
+button.primary {
+    background: #2563eb;
+    color: white;
+}
+
+button.danger {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.list-card {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    background: white;
+    padding: 18px;
+    border-radius: 18px;
+    box-shadow: 0 12px 35px rgba(15, 23, 42, 0.08);
+}
+
+.list-card h3 {
+    margin: 0 0 8px;
+}
+
+.list-card p {
+    margin: 4px 0;
+    color: #475569;
+}
+
+.card-actions {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+}
+
+.progress {
+    height: 8px;
+    background: #e2e8f0;
+    border-radius: 999px;
+    overflow: hidden;
+    margin-top: 12px;
+}
+
+.progress div {
+    height: 100%;
+    background: #2563eb;
+}
+
+.stat-value {
+    display: block;
+    font-size: 32px;
+    margin-top: 8px;
+}
+
+.empty-state {
+    background: white;
+    border: 1px dashed #cbd5e1;
+    border-radius: 18px;
+    padding: 28px;
+    text-align: center;
+    color: #64748b;
+}
+
+.dialog-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.45);
+    display: grid;
+    place-items: center;
+    padding: 20px;
+}
+
+.dialog {
+    width: min(520px, 100%);
+    background: white;
+    border-radius: 20px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.dialog label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-weight: 600;
+}
+
+.dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 8px;
+}
