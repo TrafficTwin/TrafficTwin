@@ -1,3 +1,6 @@
+import React from "react";
+
+
 export default function ParkingPage() {
     return (
         <section className="page">
