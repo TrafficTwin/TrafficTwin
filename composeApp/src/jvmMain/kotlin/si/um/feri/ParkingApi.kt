@@ -11,7 +11,10 @@ data class ParkingDto(
     val location: String,
     val typeOfPayment: String,
     val capacity: Int,
-    val occupied: Int = 0
+    val occupied: Int = 0,
+    val latitude: Double? = null,
+    val longitude: Double? = null,
+    val distanceMeters: Double? = null
 )
 
 object ParkingApi {
@@ -55,6 +58,19 @@ object ParkingApi {
         location = p.location,
         typeOfPayment = p.typeOfPayment,
         capacity = p.capacity,
-        occupied = occupied
+        occupied = occupied,
+        latitude = p.latitude,
+        longitude = p.longitude
     )
+
+    fun getNearby(latitude: Double, longitude: Double, radiusMeters: Int): List<ParkingDto> {
+        val req = Request.Builder()
+            .url("$BASE/api/parking/nearby?lat=$latitude&lon=$longitude&radius=$radiusMeters")
+            .get()
+            .build()
+
+        val body = client.newCall(req).execute().use { it.body!!.string() }
+        val type = object : TypeToken<List<ParkingDto>>() {}.type
+        return gson.fromJson(body, type)
+    }
 }
