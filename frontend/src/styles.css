@@ -1,0 +1,292 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Inter, Arial, sans-serif;
+    background: #f4f7fb;
+    color: #172033;
+}
+
+button,
+input,
+select {
+    font: inherit;
+}
+
+button {
+    cursor: pointer;
+}
+
+.app {
+    min-height: 100vh;
+    padding: 32px;
+}
+
+.hero {
+    background: linear-gradient(135deg, #172033, #2563eb);
+    color: white;
+    padding: 32px;
+    border-radius: 24px;
+    margin-bottom: 24px;
+}
+
+.eyebrow {
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 13px;
+    opacity: 0.8;
+}
+
+.panel {
+    background: white;
+    border-radius: 18px;
+    padding: 24px;
+    box-shadow: 0 12px 35px rgba(15, 23, 42, 0.08);
+}
+
+.shell {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 260px 1fr;
+}
+
+.sidebar {
+    background: #111827;
+    color: white;
+    padding: 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+}
+
+.sidebar h1 {
+    margin: 0;
+    font-size: 24px;
+}
+
+.nav {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.nav a {
+    color: #cbd5e1;
+    text-decoration: none;
+    padding: 12px 14px;
+    border-radius: 12px;
+}
+
+.nav a.active,
+.nav a:hover {
+    background: #2563eb;
+    color: white;
+}
+
+.content {
+    padding: 32px;
+}
+
+.page {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.page-header h2 {
+    margin: 0;
+    font-size: 30px;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.card {
+    background: white;
+    border-radius: 18px;
+    padding: 20px;
+    box-shadow: 0 12px 35px rgba(15, 23, 42, 0.08);
+}
+
+.card-label {
+    color: #64748b;
+    font-size: 13px;
+}
+
+.toolbar {
+    display: grid;
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+    gap: 10px;
+    background: white;
+    padding: 16px;
+    border-radius: 18px;
+    box-shadow: 0 12px 35px rgba(15, 23, 42, 0.08);
+}
+
+.toolbar input,
+.toolbar select,
+.dialog input {
+    border: 1px solid #dbe3ef;
+    border-radius: 12px;
+    padding: 10px 12px;
+    background: white;
+}
+
+button {
+    border: 0;
+    border-radius: 12px;
+    padding: 10px 14px;
+    background: #e2e8f0;
+    color: #172033;
+}
+
+button.primary {
+    background: #2563eb;
+    color: white;
+}
+
+button.danger {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.list-card {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    background: white;
+    padding: 18px;
+    border-radius: 18px;
+    box-shadow: 0 12px 35px rgba(15, 23, 42, 0.08);
+}
+
+.list-card h3 {
+    margin: 0 0 8px;
+}
+
+.list-card p {
+    margin: 4px 0;
+    color: #475569;
+}
+
+.card-actions {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+}
+
+.progress {
+    height: 8px;
+    background: #e2e8f0;
+    border-radius: 999px;
+    overflow: hidden;
+    margin-top: 12px;
+}
+
+.progress div {
+    height: 100%;
+    background: #2563eb;
+}
+
+.stat-value {
+    display: block;
+    font-size: 32px;
+    margin-top: 8px;
+}
+
+.empty-state {
+    background: white;
+    border: 1px dashed #cbd5e1;
+    border-radius: 18px;
+    padding: 28px;
+    text-align: center;
+    color: #64748b;
+}
+
+.dialog-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.45);
+    display: grid;
+    place-items: center;
+    padding: 20px;
+}
+
+.dialog {
+    width: min(520px, 100%);
+    background: white;
+    border-radius: 20px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.dialog label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-weight: 600;
+}
+
+.dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.error-box {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+    padding: 12px 14px;
+    border-radius: 14px;
+}
+
+.info-box {
+    background: #dbeafe;
+    color: #1e40af;
+    border: 1px solid #bfdbfe;
+    padding: 12px 14px;
+    border-radius: 14px;
+}
+
+@media (max-width: 1100px) {
+    .shell {
+        grid-template-columns: 1fr;
+    }
+
+    .sidebar {
+        position: static;
+    }
+
+    .toolbar {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .grid {
+        grid-template-columns: 1fr;
+    }
+
+    .list-card {
+        flex-direction: column;
+    }
+}
