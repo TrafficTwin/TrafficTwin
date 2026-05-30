@@ -15,6 +15,9 @@ services:
     environment:
       - MONGO_URI=mongodb://mongodb:27017/traffic_twin
       - API_URL=http://localhost:3000
+      - JWT_SECRET=traffic_twin_super_secret_kljuc_2024
+      - ADMIN_EMAIL=admin@city.si
+      - ADMIN_PASSWORD=admin123
     depends_on:
       - mongodb
 
