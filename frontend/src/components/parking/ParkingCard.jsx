@@ -1,8 +1,8 @@
-import React, { useContext } from "react"; // Dodan useContext
-import { AuthContext } from "../../context/AuthContext"; // Popravljen uvoz
+import React, { useContext } from "react"; 
+import { AuthContext } from "../../context/AuthContext";
 
 export default function ParkingCard({ parking, onEdit, onDelete }) {
-    const { isAdmin } = useContext(AuthContext); // Zdaj bo delovalo
+    const { isAdmin } = useContext(AuthContext); 
     
     const free = parking.capacity - parking.occupied;
     const percentage = parking.capacity > 0

@@ -1,6 +1,3 @@
-// authMiddleware.js  —  Express backend (Node.js)
-// Namestitev: npm install jsonwebtoken
-
 import jwt from "jsonwebtoken";
 
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -9,7 +6,6 @@ if (!JWT_SECRET) {
     throw new Error("JWT_SECRET ni nastavljen v .env!");
 }
 
-// ── Preveri token ─────────────────────────────────────────────────────────────
 export function requireAuth(req, res, next) {
     const authHeader = req.headers.authorization;
 
@@ -31,7 +27,7 @@ export function requireAuth(req, res, next) {
     }
 }
 
-// ── Samo admin ────────────────────────────────────────────────────────────────
+//Samo admin
 export function requireAdmin(req, res, next) {
     if (req.user?.role !== "admin") {
         return res.status(403).json({ error: "Dostop dovoljen samo administratorjem." });
@@ -39,8 +35,6 @@ export function requireAdmin(req, res, next) {
     next();
 }
 
-// ── Login endpoint (dodaj v server.js / routes) ───────────────────────────────
-// POST /api/auth/login  →  { email, password }  →  { token, user }
 export function createLoginHandler(findUser) {
     return async (req, res) => {
         const { email, password } = req.body ?? {};
@@ -50,7 +44,6 @@ export function createLoginHandler(findUser) {
         }
 
         try {
-            // findUser je tvoja funkcija iz baze — spodaj je primer
             const user = await findUser(email, password);
 
             if (!user) {

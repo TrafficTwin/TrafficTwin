@@ -37,7 +37,6 @@ export default function RoadsPage() {
         loadRoadStates();
     }, []);
 
-    // Tukaj je glavno sortiranje za prikaz
     const visibleRoads = useMemo(() => {
         return [...roadStates]
             .filter((road) =>

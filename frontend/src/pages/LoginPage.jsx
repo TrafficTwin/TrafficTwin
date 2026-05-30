@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { useAuth } from "../context/authContext";
-import { useNavigate } from "react-router-dom"; // 1. DODAJ TO
+import { useNavigate } from "react-router-dom"; 
 
 export default function LoginPage() {
-    const navigate = useNavigate(); // 2. DODAJ TO
+    const navigate = useNavigate(); 
     const { login } = useAuth();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -79,7 +79,7 @@ export default function LoginPage() {
                     </button>
                 </form>
                 <div style={{ marginTop: "20px", textAlign: "center", fontSize: "14px" }}>
-                 <span style={{ color: "#64748b" }}>Še nimaš računa? </span>
+                 <span style={{ color: "#64748b" }}></span>
                  <button 
                      onClick={() => navigate("/register")} 
                  style={{ 
@@ -91,14 +91,13 @@ export default function LoginPage() {
                     padding: 0 
         }}
     >
-        Registriraj se tukaj
+        Registriracija
     </button>
 </div>
 
                 <div className="info-box" style={{ marginTop: "20px", fontSize: "13px" }}>
                     <strong style={{ display: "block", marginBottom: "6px" }}>Testni računi</strong>
                     <div><span className="login-badge login-badge--admin">admin</span> admin@city.si / admin123</div>
-                    <div style={{ marginTop: "4px" }}><span className="login-badge login-badge--user">user</span> user@city.si / user123</div>
                 </div>
             </div>
         </div>

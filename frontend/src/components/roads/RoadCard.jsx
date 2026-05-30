@@ -1,5 +1,5 @@
 import React from "react";
-import { useAuth } from "../../context/AuthContext"; // Uporabi raje useAuth
+import { useAuth } from "../../context/AuthContext"; 
 export default function RoadCard({ road, onEdit, onDelete }) {
     const { isAdmin } = useAuth();
 

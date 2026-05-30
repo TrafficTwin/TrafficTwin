@@ -18,14 +18,12 @@ export async function apiRequest(path, options = {}) {
         },
     });
 
-    // Token je potekel ali neveljaven → prisili logout
     if (response.status === 401) {
         localStorage.removeItem(TOKEN_KEY);
         window.location.href = "/login";
         throw new Error("Seja je potekla. Prosimo, prijavite se znova.");
     }
 
-    // 403 — prijavljen, ampak nima dostopa (napačna vloga)
     if (response.status === 403) {
         throw new Error("Nimate dovoljenja za to dejanje.");
     }
