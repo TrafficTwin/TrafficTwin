@@ -1,22 +1,21 @@
-import React from "react";
-
-
-import { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import EmptyState from "../components/common/EmptyState.jsx";
 import RoadCard from "../components/roads/RoadCard.jsx";
 import RoadFormDialog from "../components/roads/RoadFormDialog.jsx";
 import RoadToolbar from "../components/roads/RoadToolbar.jsx";
+
 import {
     clearRoadStates,
     getRoadStates,
     syncRoadStates
 } from "../services/roadsApi.js";
+import { AuthContext } from "../context/AuthContext";
 
 export default function RoadsPage() {
     const [roadStates, setRoadStates] = useState([]);
     const [search, setSearch] = useState("");
     const [sortMode, setSortMode] = useState("LOCATION");
-    const [editingIndex, setEditingIndex] = useState(null);
+    const [editingRoad, setEditingRoad] = useState(null);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
@@ -39,49 +38,43 @@ export default function RoadsPage() {
     }, []);
 
     const visibleRoads = useMemo(() => {
-        return roadStates
-            .map((road, index) => ({ road, index }))
-            .filter(({ road }) =>
+        return [...roadStates]
+            .filter((road) =>
                 road.relacija?.toLowerCase().includes(search.toLowerCase())
             )
             .sort((a, b) => {
-                if (sortMode === "STATE") {
-                    return a.road.stanje.localeCompare(b.road.stanje);
-                }
-
-                if (sortMode === "TYPE") {
-                    return a.road.tip.localeCompare(b.road.tip);
-                }
-
-                return a.road.relacija.localeCompare(b.road.relacija);
+                if (sortMode === "STATE") return a.stanje.localeCompare(b.stanje);
+                if (sortMode === "TYPE") return a.tip.localeCompare(b.tip);
+                return a.relacija.localeCompare(b.relacija);
             });
     }, [roadStates, search, sortMode]);
 
     function handleAdd() {
-        setEditingIndex(null);
+        setEditingRoad(null);
         setIsDialogOpen(true);
     }
 
-    function handleEdit(index) {
-        setEditingIndex(index);
+    function handleEdit(road) {
+        setEditingRoad(road);
         setIsDialogOpen(true);
     }
 
     function handleSave(road) {
-        if (editingIndex == null) {
-            setRoadStates((current) => [...current, road]);
-        } else {
-            setRoadStates((current) =>
-                current.map((item, index) => index === editingIndex ? road : item)
-            );
-        }
-
+        setRoadStates((current) => {
+            if (editingRoad == null) {
+                // Novo dodano
+                return [...current, road];
+            } else {
+                // Posodobljeno
+                return current.map((item) => (item === editingRoad ? road : item));
+            }
+        });
         setIsDialogOpen(false);
-        setEditingIndex(null);
+        setEditingRoad(null);
     }
 
-    function handleDelete(index) {
-        setRoadStates((current) => current.filter((_, i) => i !== index));
+    function handleDelete(roadToDelete) {
+        setRoadStates((current) => current.filter((r) => r !== roadToDelete));
     }
 
     async function handleSync() {
@@ -97,7 +90,6 @@ export default function RoadsPage() {
     async function handleClear() {
         const confirmed = window.confirm("Res želiš izbrisati vsa stanja cest?");
         if (!confirmed) return;
-
         try {
             setError("");
             await clearRoadStates();
@@ -137,12 +129,12 @@ export default function RoadsPage() {
                 />
             ) : (
                 <div className="list">
-                    {visibleRoads.map(({ road, index }) => (
+                    {visibleRoads.map((road) => (
                         <RoadCard
-                            key={`${road.relacija}-${index}`}
+                            key={road.relacija || Math.random()} 
                             road={road}
-                            onEdit={() => handleEdit(index)}
-                            onDelete={() => handleDelete(index)}
+                            onEdit={() => handleEdit(road)}
+                            onDelete={() => handleDelete(road)}
                         />
                     ))}
                 </div>
@@ -150,10 +142,10 @@ export default function RoadsPage() {
 
             {isDialogOpen && (
                 <RoadFormDialog
-                    road={editingIndex == null ? null : roadStates[editingIndex]}
+                    road={editingRoad}
                     onClose={() => {
                         setIsDialogOpen(false);
-                        setEditingIndex(null);
+                        setEditingRoad(null);
                     }}
                     onSave={handleSave}
                 />

@@ -1,6 +1,4 @@
 import React from "react";
-
-
 import { useEffect, useMemo, useState } from "react";
 import EmptyState from "../components/common/EmptyState.jsx";
 import ParkingCard from "../components/parking/ParkingCard.jsx";

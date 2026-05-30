@@ -290,3 +290,121 @@ button.danger {
         flex-direction: column;
     }
 }
+
+.login-root {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+}
+
+.login-card {
+    width: 100%;
+    max-width: 420px;
+}
+
+.login-label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #172033;
+}
+
+.login-input {
+    border: 1px solid #dbe3ef;
+    border-radius: 12px;
+    padding: 10px 12px;
+    background: white;
+    font: inherit;
+    font-weight: 400;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.login-pw-wrap {
+    position: relative;
+}
+
+.login-eye {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    padding: 4px;
+    font-size: 14px;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.login-badge {
+    display: inline-block;
+    padding: 1px 7px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-right: 4px;
+}
+
+.login-badge--admin {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.login-badge--user {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.sidebar-user {
+    margin-top: auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.07);
+}
+
+.sidebar-user-info {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+}
+
+.sidebar-user-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: white;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.sidebar-user-role {
+    font-size: 11px;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.sidebar-logout {
+    background: rgba(255,255,255,0.1);
+    color: #cbd5e1;
+    border: none;
+    border-radius: 8px;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.sidebar-logout:hover {
+    background: #ef4444;
+    color: white;
+}
