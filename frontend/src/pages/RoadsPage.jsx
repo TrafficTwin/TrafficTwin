@@ -20,18 +20,20 @@ export default function RoadsPage() {
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
 
-    async function loadRoadStates() {
-        try {
-            setLoading(true);
-            setError("");
-            const data = await getRoadStates();
-            setRoadStates(data ?? []);
-        } catch (err) {
-            setError(err.message);
-        } finally {
-            setLoading(false);
-        }
+  async function loadRoadStates() {
+    try {
+        setLoading(true);
+        console.log("Kličem API za ceste..."); // DODAJ TOLE
+        const data = await getRoadStates();
+        console.log("Podatki iz API-ja:", data); // DODAJ TOLE
+        setRoadStates(data ?? []);
+    } catch (err) {
+        console.error("Napaka pri loadRoadStates:", err); // DODAJ TOLE
+        setError(err.message);
+    } finally {
+        setLoading(false);
     }
+}
 
     useEffect(() => {
         loadRoadStates();

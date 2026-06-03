@@ -24,6 +24,7 @@ val fencedParkingUrl = "https://prostor.maribor.si/ows/public/wfs?" +
         "&typeName=public:mom_parkirisca_ograjena_p" +
         "&outputFormat=application/json&srsName=EPSG:4326"
 
+
 data class Parking(
     val id: Int,
     val location: String,
@@ -61,6 +62,7 @@ fun sendToApi(data: List<Parking>) {
     val request = Request.Builder()
         .url("${ApiConfig.baseUrl}/api/parking/sync")
         .post(body)
+        .addHeader("Authorization", "Bearer ${ApiConfig.scraperToken}")
         .build()
     try {
         client.newCall(request).execute().use { response ->
