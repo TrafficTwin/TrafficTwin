@@ -53,8 +53,6 @@ class GeoJsonExporterTest {
         assertTrue(geoJson.contains("\"type\": \"Polygon\""))
         assertTrue(geoJson.contains("\"dslType\": \"building\""))
         assertTrue(geoJson.contains("\"name\": \"Obcina\""))
-
-        // Exporter zapre polygon ring, zato se prva točka ponovi na koncu.
         assertTrue(geoJson.contains("[16.1, 46.6]"))
     }
 
@@ -118,7 +116,7 @@ class GeoJsonExporterTest {
                 junction "J1" (16.1, 46.6);
                 marker "M1" (16.2, 46.7);
                 sensor "S1" (16.3, 46.8) {
-                    type = "traffic";
+                    "type" = "traffic";
                 }
             }
             """
@@ -155,7 +153,6 @@ class GeoJsonExporterTest {
         assertTrue(geoJson.contains("\"type\": \"LineString\""))
         assertTrue(geoJson.contains("[16.1, 46.6]"))
 
-        // Zaradi Double aritmetike je lahko zapis 16.110000000000003.
         assertTrue(
             geoJson.contains("16.11") ||
                     geoJson.contains("16.110000000000003")
