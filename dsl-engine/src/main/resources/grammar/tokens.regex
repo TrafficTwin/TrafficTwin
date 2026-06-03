@@ -26,6 +26,6 @@ GREATER_EQUAL   = >=
 LESS            = <
 GREATER         = >
 
-KEYWORDS        = city road building parking park zone junction marker sensor query let nil line bend polyline polygon box circ nearby where sortBy highlight set
+KEYWORDS        = city road building parking park zone junction marker sensor query let nil line bend polyline polygon box circ nearby where sortBy highlight set id point capacity occupied payment status type relation state speedLimit lanes oneway fst snd freeSpaces distance
 ENUMS           = OPEN CONGESTED WORKS CLOSED UNKNOWN FREE PAID MIXED FULL
 BOOLS           = true false

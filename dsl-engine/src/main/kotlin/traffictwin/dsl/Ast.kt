@@ -14,9 +14,9 @@ data class CityNode(
 data class LetNode(
     val name: String,
     val expression: ExpressionNode
-) : TopStatement, CityItem
+) : TopStatement, CityItem, RoadStatement, AreaStatement, ParkingStatement
 
-data object NilNode : TopStatement, CityItem
+data object NilNode : TopStatement, CityItem, RoadStatement, AreaStatement, ParkingStatement
 
 sealed interface CityItem
 
@@ -69,7 +69,7 @@ data class QueryNode(
 data class MetadataNode(
     val key: String,
     val value: ExpressionNode
-) : CityItem
+) : CityItem, RoadStatement, AreaStatement, ParkingStatement
 
 sealed interface RoadStatement
 sealed interface AreaStatement
