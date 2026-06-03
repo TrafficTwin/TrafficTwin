@@ -1,0 +1,127 @@
+<program> ::= { <top_statement> }
+
+<top_statement> ::= <city_block>
+                  | <let_statement>
+                  | "nil" ";"
+
+<city_block> ::= "city" <string> "{" { <city_item> } "}"
+
+<city_item> ::= <road_block>
+              | <building_block>
+              | <parking_block>
+              | <park_block>
+              | <zone_block>
+              | <junction_statement>
+              | <marker_statement>
+              | <sensor_block>
+              | <query_block>
+              | <let_statement>
+              | <metadata_statement>
+              | "nil" ";"
+
+<road_block> ::= "road" <string> "{" { <road_statement> } "}" ";"?
+
+<road_statement> ::= <geometry_statement> ";"
+                   | "type" <string> ";"
+                   | "relation" <string> ";"
+                   | "state" <road_state> ";"
+                   | "speedLimit" <expression> ";"
+                   | "lanes" <expression> ";"
+                   | "oneway" <bool> ";"
+                   | <metadata_statement>
+                   | <let_statement>
+                   | "nil" ";"
+
+<building_block> ::= "building" <string> "{" { <area_statement> } "}" ";"?
+<park_block> ::= "park" <string> "{" { <area_statement> } "}" ";"?
+<zone_block> ::= "zone" <string> "{" { <area_statement> } "}" ";"?
+
+<area_statement> ::= <geometry_statement> ";"
+                   | <metadata_statement>
+                   | <let_statement>
+                   | "nil" ";"
+
+<parking_block> ::= "parking" <string> "{" { <parking_statement> } "}" ";"?
+
+<parking_statement> ::= "id" <integer> ";"
+                      | "point" <point> ";"
+                      | "capacity" <expression> ";"
+                      | "occupied" <expression> ";"
+                      | "payment" <payment_type> ";"
+                      | "status" <parking_status> ";"
+                      | <metadata_statement>
+                      | <let_statement>
+                      | "nil" ";"
+
+<sensor_block> ::= "sensor" <string> <point> "{" { <metadata_statement> } "}" ";"?
+
+<junction_statement> ::= "junction" <string>? <point> ";"
+<marker_statement> ::= "marker" <string>? <point> ";"
+
+<query_block> ::= "query" <string> "{" { <query_statement> } "}" ";"?
+
+<query_statement> ::= "nearby" "(" <expression> "," <expression> "," <query_target> ")" ";"
+                    | "where" <condition> ";"
+                    | "sortBy" <identifier> ";"
+                    | "highlight" <identifier> ";"
+
+<geometry_statement> ::= "line" "(" <expression> "," <expression> ")"
+                       | "bend" "(" <expression> "," <expression> "," <expression> ")"
+                       | "polyline" "(" <point_list> ")"
+                       | "polygon" "(" <point_list> ")"
+                       | "box" "(" <point> "," <point> ")"
+                       | "circ" "(" <point> "," <expression> ")"
+
+<metadata_statement> ::= "set" "(" <string> "," <value> ")" ";"
+
+<let_statement> ::= "let" <identifier> "=" <expression> ";"
+
+<condition> ::= <expression> <comparison_op> <expression>
+
+<comparison_op> ::= "==" | "!=" | "<" | "<=" | ">" | ">="
+
+<expression> ::= <term> { ("+" | "-") <term> }
+
+<term> ::= <factor> { ("*" | "/") <factor> }
+
+<factor> ::= <number>
+           | <string>
+           | <bool>
+           | <point>
+           | <identifier>
+           | "fst" "(" <expression> ")"
+           | "snd" "(" <expression> ")"
+           | "freeSpaces"
+           | "distance"
+           | "(" <expression> ")"
+
+<point> ::= "(" <expression> "," <expression> ")"
+
+<point_list> ::= <point> { "," <point> }
+
+<value> ::= <expression>
+          | <road_state>
+          | <payment_type>
+          | <parking_status>
+
+<road_state> ::= "OPEN" | "CONGESTED" | "WORKS" | "CLOSED" | "UNKNOWN"
+
+<payment_type> ::= "FREE" | "PAID" | "MIXED" | "UNKNOWN"
+
+<parking_status> ::= "OPEN" | "FULL" | "CLOSED" | "UNKNOWN"
+
+<query_target> ::= "parking" | "road" | "building" | "park" | "zone" | "sensor"
+
+<bool> ::= "true" | "false"
+
+<identifier> ::= <letter> { <letter> | <digit> | "_" }
+
+<string> ::= "\"" { <any_character_except_quote> } "\""
+
+<number> ::= ["-"] <digit> { <digit> } ["." <digit> { <digit> }]
+
+<integer> ::= ["-"] <digit> { <digit> }
+
+<letter> ::= "A" | ... | "Z" | "a" | ... | "z" | "_"
+
+<digit> ::= "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
