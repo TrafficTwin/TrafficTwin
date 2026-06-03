@@ -1,19 +1,24 @@
-import React from "react";
+import React, { useContext } from "react";
+import { AuthContext } from "../../context/AuthContext";
+
 export default function ParkingToolbar({
-                                           search,
-                                           onSearchChange,
-                                           sortMode,
-                                           onSortChange,
-                                           latitude,
-                                           longitude,
-                                           radius,
-                                           onLatitudeChange,
-                                           onLongitudeChange,
-                                           onRadiusChange,
-                                           onRefresh,
-                                           onNearby,
-                                           onAdd
-                                       }) {
+    search,
+    onSearchChange,
+    sortMode,
+    onSortChange,
+    latitude,
+    longitude,
+    radius,
+    onLatitudeChange,
+    onLongitudeChange,
+    onRadiusChange,
+    onRefresh,
+    onNearby,
+    onAdd
+}) {
+    // Tukaj pridobimo informacijo, ali je uporabnik admin
+    const { isAdmin } = useContext(AuthContext);
+
     return (
         <div className="toolbar">
             <input
@@ -48,7 +53,13 @@ export default function ParkingToolbar({
 
             <button onClick={onNearby}>V bližini</button>
             <button onClick={onRefresh}>Osveži</button>
-            <button className="primary" onClick={onAdd}>Novo</button>
+            
+            {/* Gumb se prikaže samo, če je isAdmin true */}
+            {isAdmin && (
+                <button className="primary" onClick={onAdd}>
+                    Novo
+                </button>
+            )}
         </div>
     );
 }
