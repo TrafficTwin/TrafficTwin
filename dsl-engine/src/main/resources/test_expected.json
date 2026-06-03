@@ -1,0 +1,82 @@
+[
+  {
+    "test": 1,
+    "name": "minimalno veljavno mesto",
+    "type": "positive",
+    "parse": true,
+    "semantic": "ok",
+    "reason": "city, road, line, building in box so veljavni"
+  },
+  {
+    "test": 2,
+    "name": "cesta s stanjem in relacijo",
+    "type": "positive",
+    "parse": true,
+    "semantic": "ok",
+    "reason": "road vsebuje type, relation, state, speedLimit in polyline"
+  },
+  {
+    "test": 3,
+    "name": "parkirisce z zasedenostjo",
+    "type": "positive",
+    "parse": true,
+    "semantic": "ok",
+    "reason": "occupied je manjši od capacity"
+  },
+  {
+    "test": 4,
+    "name": "poizvedba nearby",
+    "type": "positive",
+    "parse": true,
+    "semantic": "ok",
+    "reason": "nearby uporablja veljavno lokacijo, radij in target parking"
+  },
+  {
+    "test": 5,
+    "name": "spremenljivke in izrazi",
+    "type": "positive",
+    "parse": true,
+    "semantic": "ok",
+    "reason": "let, fst, snd in aritmetični izrazi so veljavni"
+  },
+  {
+    "test": 6,
+    "name": "park in krizisce",
+    "type": "positive",
+    "parse": true,
+    "semantic": "ok",
+    "reason": "polygon je zaključen, junction ima točko"
+  },
+  {
+    "test": 7,
+    "name": "nezakljucen poligon zgradbe",
+    "type": "negative",
+    "parse": true,
+    "semantic": "error",
+    "reason": "polygon ni zaključen"
+  },
+  {
+    "test": 8,
+    "name": "zasedenost vecja od kapacitete",
+    "type": "negative",
+    "parse": true,
+    "semantic": "error",
+    "reason": "occupied je večji od capacity"
+  },
+  {
+    "test": 9,
+    "name": "neveljavne geografske koordinate",
+    "type": "negative",
+    "parse": true,
+    "semantic": "error",
+    "reason": "latitude 120 ni veljavna"
+  },
+  {
+    "test": 10,
+    "name": "cesta seka zgradbo",
+    "type": "warning",
+    "parse": true,
+    "semantic": "warning",
+    "reason": "cesta poteka skozi zgradbo"
+  }
+]
