@@ -532,25 +532,34 @@ class Parser(private val tokens: List<Token>) {
         check(TokenType.CONGESTED) -> { advance(); RoadState.CONGESTED }
         check(TokenType.WORKS)     -> { advance(); RoadState.WORKS }
         check(TokenType.CLOSED)    -> { advance(); RoadState.CLOSED }
-        else -> throw error("Stanje ceste")
+        check(TokenType.UNKNOWN)   -> { advance(); RoadState.UNKNOWN }
+        else -> throw error("Pričakovano stanje ceste: OPEN, CONGESTED, WORKS, CLOSED ali UNKNOWN")
     }
 
     private fun paymentType(): PaymentType = when {
-        check(TokenType.FREE)  -> { advance(); PaymentType.FREE }
-        check(TokenType.PAID)  -> { advance(); PaymentType.PAID }
-        else -> throw error("Tip plačila")
+        check(TokenType.FREE)    -> { advance(); PaymentType.FREE }
+        check(TokenType.PAID)    -> { advance(); PaymentType.PAID }
+        check(TokenType.MIXED)   -> { advance(); PaymentType.MIXED }
+        check(TokenType.UNKNOWN) -> { advance(); PaymentType.UNKNOWN }
+        else -> throw error("Pričakovan tip plačila: FREE, PAID, MIXED ali UNKNOWN")
     }
 
     private fun parkingStatus(): ParkingStatus = when {
-        check(TokenType.OPEN)   -> { advance(); ParkingStatus.OPEN }
-        check(TokenType.FULL)   -> { advance(); ParkingStatus.FULL }
-        else -> throw error("Status parkirišča")
+        check(TokenType.OPEN)    -> { advance(); ParkingStatus.OPEN }
+        check(TokenType.FULL)    -> { advance(); ParkingStatus.FULL }
+        check(TokenType.CLOSED)  -> { advance(); ParkingStatus.CLOSED }
+        check(TokenType.UNKNOWN) -> { advance(); ParkingStatus.UNKNOWN }
+        else -> throw error("Pričakovan status parkirišča: OPEN, FULL, CLOSED ali UNKNOWN")
     }
 
     private fun queryTarget(): QueryTarget = when {
-        check(TokenType.PARKING) -> { advance(); QueryTarget.PARKING }
-        check(TokenType.ROAD)    -> { advance(); QueryTarget.ROAD }
-        else -> throw error("Cilj poizvedbe")
+        check(TokenType.PARKING)  -> { advance(); QueryTarget.PARKING }
+        check(TokenType.ROAD)     -> { advance(); QueryTarget.ROAD }
+        check(TokenType.BUILDING) -> { advance(); QueryTarget.BUILDING }
+        check(TokenType.PARK)     -> { advance(); QueryTarget.PARK }
+        check(TokenType.ZONE)     -> { advance(); QueryTarget.ZONE }
+        check(TokenType.SENSOR)   -> { advance(); QueryTarget.SENSOR }
+        else -> throw error("Pričakovan cilj poizvedbe: parking, road, building, park, zone ali sensor")
     }
 
     private fun boolean(): Boolean = when {

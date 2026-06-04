@@ -7,7 +7,7 @@ package traffictwin.dsl
  *  1. Zasedenost parkirišča ne sme presegati kapacitete  (napaka)
  *  2. Geografske koordinate morajo biti v veljavnih mejah (napaka)
  *  3. Ceste ne smejo sekati zgradb                        (opozorilo)
- *  4. Poligoni zgradb morajo imeti vsaj 3 različne točke (napaka, test 7)
+ *  4. Poligoni območij morajo biti zaključeni: prva točka mora biti enaka zadnji (napaka)
  */
 class SemanticException(message: String) : Exception(message)
 
@@ -48,6 +48,8 @@ object SemanticValidator {
             when (item) {
                 is ParkingNode  -> validateParking(item, city.name, errors)
                 is BuildingNode -> validateBuilding(item, city.name, errors, buildingBoxes, buildingPolygons)
+                is ParkNode     -> validateAreaPolygons(item.name, item.statements, city.name, "park", errors)
+                is ZoneNode     -> validateAreaPolygons(item.name, item.statements, city.name, "cona", errors)
                 else -> {}
             }
         }
@@ -116,21 +118,63 @@ object SemanticValidator {
                     buildingBoxes.add(node.name to geo)
                 }
                 is PolygonGeometry -> {
-                    // Pravilo 4 (test 7): poligon mora imeti vsaj 3 unikatne točke
-                    val uniquePts = geo.points.map {
-                        evalNumber(it.x) to evalNumber(it.y)
-                    }.toSet()
-
-                    if (uniquePts.size < 3) {
-                        errors.add(
-                            "[${cityName}/${node.name}] Poligon stavbe mora imeti vsaj 3 različne točke, " +
-                                    "ima pa ${uniquePts.size}. Poligon je nezaključen ali degeneriran."
-                        )
-                    }
+                    validatePolygon(geo, cityName, node.name, "stavba", errors)
                     buildingPolygons.add(node.name to geo)
                 }
                 else -> {}
             }
+        }
+    }
+
+    private fun validateAreaPolygons(
+        areaName: String,
+        statements: List<AreaStatement>,
+        cityName: String,
+        areaType: String,
+        errors: MutableList<String>
+    ) {
+        for (stmt in statements) {
+            val geo = (stmt as? GeometryStatement)?.geometry
+            if (geo is PolygonGeometry) {
+                validatePolygon(geo, cityName, areaName, areaType, errors)
+            }
+        }
+    }
+
+    private fun validatePolygon(
+        polygon: PolygonGeometry,
+        cityName: String,
+        areaName: String,
+        areaType: String,
+        errors: MutableList<String>
+    ) {
+        val points = polygon.points.map { evalNumber(it.x) to evalNumber(it.y) }
+
+        if (points.size < 4) {
+            errors.add(
+                "[${cityName}/${areaName}] Poligon ($areaType) mora imeti vsaj 4 zapisane točke, " +
+                        "ker mora biti zadnja točka enaka prvi. Trenutno jih ima ${points.size}."
+            )
+            return
+        }
+
+        if (points.first() != points.last()) {
+            errors.add(
+                "[${cityName}/${areaName}] Poligon ($areaType) ni zaključen. " +
+                        "Prva točka ${points.first()} mora biti enaka zadnji točki ${points.last()}."
+            )
+        }
+
+        val uniquePointsWithoutClosingPoint = points.dropLast(1).toSet()
+        if (uniquePointsWithoutClosingPoint.size < 3) {
+            errors.add(
+                "[${cityName}/${areaName}] Poligon ($areaType) mora imeti vsaj 3 različne točke. " +
+                        "Trenutno jih ima ${uniquePointsWithoutClosingPoint.size}."
+            )
+        }
+
+        points.forEachIndexed { index, (x, y) ->
+            validateCoordinates(x, y, "${cityName}/${areaName}/polygon[$index]", errors)
         }
     }
 
