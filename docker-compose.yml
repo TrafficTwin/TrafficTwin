@@ -9,7 +9,7 @@ services:
 
   app:
     build: ./server  
-    container_name: traffic_twin_app
+    container_name: traffic_twin_app2
     ports:
       - "3000:3000"
     environment:
