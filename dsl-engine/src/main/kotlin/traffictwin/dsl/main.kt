@@ -8,9 +8,99 @@ package traffictwin.dsl
 //                       -d traffictwin.jar && java -jar traffictwin.jar
 // ═══════════════════════════════════════════════════════════════════════════════
 
-fun main() {
-    val runner = TestRunner()
-    runner.runAll()
+import java.io.File
+
+fun main(args: Array<String>) {
+    when (args.firstOrNull()) {
+        null -> {
+            val runner = TestRunner()
+            runner.runAll()
+            exportDefaultDemo()
+        }
+
+        "test" -> {
+            val runner = TestRunner()
+            runner.runAll()
+        }
+
+        "geojson" -> {
+            val inputPath = args.getOrNull(1)
+                ?: error("Manjka vhodna DSL datoteka. Primer: geojson src/main/resources/demo_mesto.dsl output.geojson")
+            val outputPath = args.getOrNull(2) ?: "output.geojson"
+            exportGeoJson(inputPath, outputPath)
+        }
+
+        "help", "--help", "-h" -> printUsage()
+
+        else -> {
+            println("Neznan ukaz: ${args.first()}")
+            printUsage()
+        }
+    }
+}
+
+private fun parseDsl(source: String): ProgramNode {
+    val tokens = Lexer(source).tokenize()
+    return Parser(tokens).parse()
+}
+
+private fun exportGeoJson(inputPath: String, outputPath: String) {
+    val inputFile = File(inputPath)
+    require(inputFile.exists()) { "Vhodna datoteka ne obstaja: ${inputFile.path}" }
+
+    val source = inputFile.readText()
+    val ast = parseDsl(source)
+
+    val validation = SemanticValidator.validate(ast)
+    if (!validation.isValid) {
+        println("Semantična validacija ni uspela:")
+        validation.errors.forEach { println("  NAPAKA: $it") }
+        return
+    }
+    validation.warnings.forEach { println("  OPOZORILO: $it") }
+
+    val geoJson = GeoJsonExporter().export(ast)
+    val outputFile = File(outputPath)
+    outputFile.parentFile?.mkdirs()
+    outputFile.writeText(geoJson)
+
+    println("GeoJSON izvoz je pripravljen: ${outputFile.path}")
+    println("Datoteko lahko odpreš ali kopiraš v https://geojson.io")
+}
+
+private fun exportDefaultDemo() {
+    val candidates = listOf(
+        File("dsl-engine/src/main/resources/demo_mesto.dsl"),
+        File("src/main/resources/demo_mesto.dsl")
+    )
+
+    val demo = candidates.firstOrNull { it.exists() }
+    if (demo == null) {
+        println("Demo datoteke demo_mesto.dsl nisem našel, zato GeoJSON ni bil izvožen.")
+        return
+    }
+
+    val output = File("output.geojson")
+    exportGeoJson(demo.path, output.path)
+}
+
+private fun printUsage() {
+    println(
+        """
+        Uporaba:
+          ./gradlew :dsl-engine:run
+              Zažene vse teste in izvozi demo_mesto.dsl v output.geojson.
+
+          ./gradlew :dsl-engine:run --args="test"
+              Zažene samo testno zbirko.
+
+          ./gradlew :dsl-engine:run --args="geojson <vhod.dsl> <izhod.geojson>"
+              Prebere DSL datoteko, zgradi AST, izvede semantično validacijo in izvozi GeoJSON.
+
+        Primer:
+          ./gradlew :dsl-engine:run --args="geojson dsl-engine/src/main/resources/demo_mesto.dsl output.geojson"
+        """.trimIndent()
+    )
 }
 
 // ── Pomožni razred za poganjanje testov ──────────────────────────────────────
@@ -138,14 +228,14 @@ class TestRunner {
         // Parser sprejme sintakso, semantični analizator pa zavrne degeneriran poligon.
         // Opomba: polygon z (0,0),(3,0),(3,2),(0,2) ima 4 unikatne točke → OK za validator.
         // Da demonstriramo napako test 7, uporabimo poligon z le 2 unikatnima točkama.
-        negativeTest(7, "Nezaključen poligon zgradbe — premalo unikatnih točk") {
+        negativeTest(7, "Nezaključen poligon zgradbe — first != last") {
             """
-            city "Napaka poligon" {
-                building "Nezakljucena" {
-                    polygon((0, 0), (3, 0), (0, 0), (3, 0));
-                };
-            }
-            """.trimIndent()
+    city "Napaka poligon" {
+        building "Nezakljucena" {
+            polygon((0, 0), (3, 0), (3, 2), (0, 2));
+        };
+    }
+    """.trimIndent()
         }
 
         // ── Test 8 ────────────────────────────────────────────────────────────
