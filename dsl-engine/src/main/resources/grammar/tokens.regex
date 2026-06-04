@@ -3,8 +3,8 @@ LINE_COMMENT    = //[^\n]*
 BLOCK_COMMENT   = /\*[\s\S]*?\*/
 
 STRING          = "([^"\\]|\\.)*"
-NUMBER          = -?[0-9]+(\.[0-9]+)?
-INTEGER         = -?[0-9]+
+NUMBER          = [0-9]+\.[0-9]+
+INTEGER         = [0-9]+
 IDENTIFIER      = [A-Za-z_][A-Za-z0-9_]*
 
 LEFT_BRACE      = \{
@@ -13,19 +13,21 @@ LEFT_PAREN      = \(
 RIGHT_PAREN     = \)
 COMMA           = ,
 SEMICOLON       = ;
-EQUAL           = =
-PLUS            = \+
-MINUS           = -
-STAR            = \*
-SLASH           = /
 
 EQUAL_EQUAL     = ==
 BANG_EQUAL      = !=
 LESS_EQUAL      = <=
 GREATER_EQUAL   = >=
+
+EQUAL           = =
+PLUS            = \+
+MINUS           = -
+STAR            = \*
+SLASH           = /
 LESS            = <
 GREATER         = >
 
-KEYWORDS        = city road building parking park zone junction marker sensor query let nil line bend polyline polygon box circ nearby where sortBy highlight set id point capacity occupied payment status type relation state speedLimit lanes oneway fst snd freeSpaces distance
-ENUMS           = OPEN CONGESTED WORKS CLOSED UNKNOWN FREE PAID MIXED FULL
+KEYWORDS        = city road building parking park zone junction marker sensor query let nil line bend polyline polygon box circ nearby where sort_by sortBy highlight set id point capacity occupied payment status type relation state speed_limit speedLimit lanes oneway
+ENUMS           = open OPEN congested CONGESTED works WORKS closed CLOSED unknown UNKNOWN free FREE paid PAID mixed MIXED full FULL
 BOOLS           = true false
+BUILTIN_IDENTIFIERS = fst snd freeSpaces distance
