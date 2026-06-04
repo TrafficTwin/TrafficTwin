@@ -1,6 +1,8 @@
 import React from "react";
-
+import { useAuth } from "../../context/AuthContext"; 
 export default function RoadCard({ road, onEdit, onDelete }) {
+    const { isAdmin } = useAuth();
+
     return (
         <article className="list-card">
             <div className="list-card-main">
@@ -10,8 +12,10 @@ export default function RoadCard({ road, onEdit, onDelete }) {
             </div>
 
             <div className="card-actions">
-                <button onClick={onEdit}>Uredi</button>
-                <button className="danger" onClick={onDelete}>Izbriši</button>
+                {isAdmin && <button onClick={() => onEdit(road)}>Uredi</button>}
+                {isAdmin && (
+                <button className="danger" onClick={() => onDelete(road)}>Izbriši</button>
+    )}
             </div>
         </article>
     );

@@ -1,0 +1,1 @@
+const jwt = require("jsonwebtoken"); const token = jwt.sign({ sub: "scraper", role: "admin", name: "Kotlin Scraper" }, "traffic_twin_super_secret_kljuc_2024", { expiresIn: "365d" }); console.log(token);

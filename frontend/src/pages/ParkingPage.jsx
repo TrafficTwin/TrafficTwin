@@ -1,11 +1,10 @@
 import React from "react";
-
-
 import { useEffect, useMemo, useState } from "react";
 import EmptyState from "../components/common/EmptyState.jsx";
 import ParkingCard from "../components/parking/ParkingCard.jsx";
 import ParkingFormDialog from "../components/parking/ParkingFormDialog.jsx";
 import ParkingToolbar from "../components/parking/ParkingToolbar.jsx";
+import { useAuth } from "../context/AuthContext.jsx";
 import {
     createParking,
     deleteParking,
@@ -15,6 +14,7 @@ import {
 } from "../services/parkingApi.js";
 
 export default function ParkingPage() {
+    const { isAdmin } = useAuth();
     const [parkingLots, setParkingLots] = useState([]);
     const [search, setSearch] = useState("");
     const [sortMode, setSortMode] = useState("LOCATION");
@@ -147,7 +147,7 @@ export default function ParkingPage() {
                 onRadiusChange={setRadius}
                 onRefresh={loadParking}
                 onNearby={handleNearby}
-                onAdd={handleAdd}
+                onAdd={isAdmin ? handleAdd : null}
             />
 
             {error && <div className="error-box">{error}</div>}
@@ -164,8 +164,8 @@ export default function ParkingPage() {
                         <ParkingCard
                             key={parking.id}
                             parking={parking}
-                            onEdit={handleEdit}
-                            onDelete={handleDelete}
+                            onEdit={isAdmin ? handleEdit : null}
+                            onDelete={isAdmin ? handleEdit : null}
                         />
                     ))}
                 </div>

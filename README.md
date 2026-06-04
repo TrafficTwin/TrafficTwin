@@ -61,7 +61,7 @@ dev_idtaska
 ```
 Ta branch pushamo na repozitorij in naredimo pull request na branch dev.
 
-## Delo na novem tasku
+## Zagon strežnika
 
 Za zagon strežnika je potrebno zagnati naslednje ukaze:
 
@@ -74,3 +74,20 @@ Za zagon strežnika je potrebno zagnati naslednje ukaze:
 ``` docker-compose down ``` zaustavitev in odstranitev kontejnerja
 
 ``` docker-compose stop ``` zaustavitev kontejnerja
+
+## TrafficTwin DSL engine
+
+DSL del projekta je v modulu `dsl-engine`.
+
+Pomembne datoteke:
+
+- `dsl-engine/src/main/kotlin/traffictwin/dsl/Types.kt`
+- `dsl-engine/src/main/kotlin/traffictwin/dsl/Ast.kt`
+- `dsl-engine/src/main/kotlin/traffictwin/dsl/Token.kt`
+- `dsl-engine/src/main/resources/grammar/TrafficTwin.bnf`
+- `dsl-engine/src/main/resources/grammar/tokens.regex`
+- `dsl-engine/src/main/resources/test_mesto.dsl`
+- `dsl-engine/src/main/resources/test_expected.json`
+- `dsl-engine/src/test/kotlin/traffictwin/dsl/DslResourcesTest.kt`
+
+Modul vsebuje začetno strukturo za DSL jezik: podatkovne tipe, AST konstrukte, tokene, BNF slovnico, regex pravila in 10 testnih programov.
