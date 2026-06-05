@@ -1,12 +1,21 @@
-import React, { useContext } from "react"; 
-import { AuthContext } from "../../context/AuthContext";
+import React from "react";
+import { useAuth } from "../../context/AuthContext.jsx";
 
-export default function ParkingCard({ parking, onEdit, onDelete }) {
-    const { isAdmin } = useContext(AuthContext); 
-    
-    const free = parking.capacity - parking.occupied;
-    const percentage = parking.capacity > 0
-        ? Math.round((parking.occupied / parking.capacity) * 100)
+export default function ParkingCard({
+                                        parking,
+                                        onEdit,
+                                        onDelete,
+                                        isFavourite = false,
+                                        onToggleFavourite
+                                    }) {
+    const { isAdmin } = useAuth();
+
+    const capacity = Number(parking.capacity) || 0;
+    const occupied = Number(parking.occupied) || 0;
+    const free = Math.max(capacity - occupied, 0);
+
+    const percentage = capacity > 0
+        ? Math.round((occupied / capacity) * 100)
         : 0;
 
     return (
@@ -14,21 +23,39 @@ export default function ParkingCard({ parking, onEdit, onDelete }) {
             <div className="list-card-main">
                 <h3>{parking.location}</h3>
                 <p>Tip plačila: {parking.typeOfPayment}</p>
-                <p>Kapaciteta: {parking.capacity}</p>
-                <p>Zasedeno: {parking.occupied}</p>
+                <p>Kapaciteta: {capacity}</p>
+                <p>Zasedeno: {occupied}</p>
                 <p>Prosto: {free}</p>
+
                 <div className="progress">
                     <div style={{ width: `${percentage}%` }} />
                 </div>
             </div>
 
             <div className="card-actions">
-                {isAdmin && <button onClick={() => onEdit(parking)}>Uredi</button>}
-                {isAdmin && (
-                <button className="danger" onClick={() => onDelete(parking.id)}>
-                    Izbriši
-                </button>
-    )}
+                {onToggleFavourite && (
+                    <button
+                        className={isFavourite ? "favourite active" : "favourite"}
+                        onClick={() => onToggleFavourite(parking)}
+                    >
+                        {isFavourite ? "★ Priljubljeno" : "☆ Priljubljeno"}
+                    </button>
+                )}
+
+                {isAdmin && onEdit && (
+                    <button onClick={() => onEdit(parking)}>
+                        Uredi
+                    </button>
+                )}
+
+                {isAdmin && onDelete && (
+                    <button
+                        className="danger"
+                        onClick={() => onDelete(parking.id)}
+                    >
+                        Izbriši
+                    </button>
+                )}
             </div>
         </article>
     );
