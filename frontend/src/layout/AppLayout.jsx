@@ -17,6 +17,7 @@ export default function AppLayout() {
                     <NavLink to="/">Pregled</NavLink>
                     <NavLink to="/parking">Parkirišča</NavLink>
                     <NavLink to="/stanje-cest">Stanje cest</NavLink>
+                    <NavLink to="/zemljevid">Zemljevid</NavLink>
                 </nav>
 
                 <div className="sidebar-user">
