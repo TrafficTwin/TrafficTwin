@@ -8,7 +8,7 @@ services:
       - mongo-data:/data/db
 
   app:
-    build: ./server  
+    image: vidmadjar/traffictwin-server:latest  
     container_name: traffic_twin_app2
     ports:
       - "3000:3000"
