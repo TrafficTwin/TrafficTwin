@@ -73,7 +73,7 @@ jobs:
           context: ./server
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/traffictwin-server:latest
-      - name: Trigger Webhook
-        uses: distributhor/workflow-webhook@v3
-        with:
-          webhook_url: ${{ secrets.WEBHOOK_URL }}
+     # - name: Trigger Webhook
+      #  uses: distributhor/workflow-webhook@v3
+    #    with:
+     #     webhook_url: ${{ secrets.WEBHOOK_URL }}
