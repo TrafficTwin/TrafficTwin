@@ -351,6 +351,98 @@ app.get('/api/users/me', requireAuth, async (req, res) => {
     }
 });
 
+app.post('/api/users/me/favourites/parking/:parkingId', requireAuth, async (req, res) => {
+    try {
+        const parkingId = Number(req.params.parkingId);
+
+        if (!Number.isFinite(parkingId)) {
+            return res.status(400).json({ error: "Neveljaven ID parkirišča." });
+        }
+
+        const parking = await col().findOne({ id: parkingId });
+
+        if (!parking) {
+            return res.status(404).json({ error: "Parkirišče ne obstaja." });
+        }
+
+        const email = getCurrentUserEmail(req);
+        await ensureCurrentUserDoc(req);
+
+        await userCol().updateOne(
+            { email },
+            { $addToSet: { favouriteParkings: parkingId } }
+        );
+
+        res.json(await buildUserProfile(req));
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.delete('/api/users/me/favourites/parking/:parkingId', requireAuth, async (req, res) => {
+    try {
+        const parkingId = Number(req.params.parkingId);
+
+        if (!Number.isFinite(parkingId)) {
+            return res.status(400).json({ error: "Neveljaven ID parkirišča." });
+        }
+
+        const email = getCurrentUserEmail(req);
+        await ensureCurrentUserDoc(req);
+
+        await userCol().updateOne(
+            { email },
+            { $pull: { favouriteParkings: parkingId } }
+        );
+
+        res.json(await buildUserProfile(req));
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/users/me/favourites/road/:roadId', requireAuth, async (req, res) => {
+    try {
+        const roadId = String(req.params.roadId);
+
+        const road = await roadCol().findOne({ id: roadId });
+
+        if (!road) {
+            return res.status(404).json({ error: "Cesta ne obstaja." });
+        }
+
+        const email = getCurrentUserEmail(req);
+        await ensureCurrentUserDoc(req);
+
+        await userCol().updateOne(
+            { email },
+            { $addToSet: { favouriteRoads: roadId } }
+        );
+
+        res.json(await buildUserProfile(req));
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.delete('/api/users/me/favourites/road/:roadId', requireAuth, async (req, res) => {
+    try {
+        const roadId = String(req.params.roadId);
+
+        const email = getCurrentUserEmail(req);
+        await ensureCurrentUserDoc(req);
+
+        await userCol().updateOne(
+            { email },
+            { $pull: { favouriteRoads: roadId } }
+        );
+
+        res.json(await buildUserProfile(req));
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // -------------------- WEBSOCKET --------------------
 
 function createWsPayload(data) {
