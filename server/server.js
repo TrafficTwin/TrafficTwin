@@ -70,6 +70,121 @@ function normalizeParkingDoc(raw) {
     return doc;
 }
 
+function slugify(value) {
+    return String(value ?? "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+}
+
+function createRoadId(item, index = 0) {
+    const slug = slugify(`${item.tip ?? ""}-${item.relacija ?? ""}`);
+    return slug ? `road-${slug}` : `road-${index}`;
+}
+
+function normalizePoint(point) {
+    if (Array.isArray(point)) {
+        const latitude = toNumber(point[0]);
+        const longitude = toNumber(point[1]);
+
+        if (hasValidCoordinates(latitude, longitude)) {
+            return [latitude, longitude];
+        }
+
+        return null;
+    }
+
+    const latitude = toNumber(point.latitude);
+    const longitude = toNumber(point.longitude);
+
+    if (hasValidCoordinates(latitude, longitude)) {
+        return [latitude, longitude];
+    }
+
+    return null;
+}
+
+function normalizeRoadCoordinates(item) {
+    const rawCoordinates = Array.isArray(item.coordinates)
+        ? item.coordinates
+        : Array.isArray(item.polyline)
+            ? item.polyline
+            : [];
+
+    return rawCoordinates
+        .map(normalizePoint)
+        .filter(Boolean);
+}
+
+function normalizeRoadDoc(item, index = 0) {
+    const latitude = toNumber(item.latitude);
+    const longitude = toNumber(item.longitude);
+    const hasPoint = hasValidCoordinates(latitude, longitude);
+
+    return {
+        id: item.id ?? createRoadId(item, index),
+        tip: item.tip ?? "",
+        relacija: item.relacija ?? "",
+        stanje: item.stanje ?? "",
+        latitude: hasPoint ? latitude : null,
+        longitude: hasPoint ? longitude : null,
+        coordinates: normalizeRoadCoordinates(item),
+        lastUpdated: new Date()
+    };
+}
+
+function normalizePoint(point) {
+    if (Array.isArray(point)) {
+        const latitude = toNumber(point[0]);
+        const longitude = toNumber(point[1]);
+
+        if (hasValidCoordinates(latitude, longitude)) {
+            return [latitude, longitude];
+        }
+
+        return null;
+    }
+
+    const latitude = toNumber(point.latitude);
+    const longitude = toNumber(point.longitude);
+
+    if (hasValidCoordinates(latitude, longitude)) {
+        return [latitude, longitude];
+    }
+
+    return null;
+}
+
+function normalizeRoadCoordinates(item) {
+    const rawCoordinates = Array.isArray(item.coordinates)
+        ? item.coordinates
+        : Array.isArray(item.polyline)
+            ? item.polyline
+            : [];
+
+    return rawCoordinates
+        .map(normalizePoint)
+        .filter(Boolean);
+}
+
+function normalizeRoadDoc(item) {
+    const latitude = toNumber(item.latitude);
+    const longitude = toNumber(item.longitude);
+    const hasPoint = hasValidCoordinates(latitude, longitude);
+
+    return {
+        tip: item.tip ?? "",
+        relacija: item.relacija ?? "",
+        stanje: item.stanje ?? "",
+        latitude: hasPoint ? latitude : null,
+        longitude: hasPoint ? longitude : null,
+        coordinates: normalizeRoadCoordinates(item),
+        lastUpdated: new Date()
+    };
+}
+
 // -------------------- JWT MIDDLEWARE --------------------
 
 function requireAuth(req, res, next) {
@@ -113,7 +228,9 @@ app.post('/api/auth/register', async (req, res) => {
             email: email.toLowerCase(),
             password: hashedPassword,
             role: "user",
-            name
+            name,
+            favouriteParkings: [],
+            favouriteRoads: []
         });
 
         res.status(201).json({ message: "Registracija uspešna." });
@@ -322,9 +439,7 @@ app.post('/api/stanje-cest/sync',     requireAuth, requireAdmin, async (req, res
     try {
         if (!Array.isArray(req.body)) return res.status(400).json({ error: "Pričakovan je seznam stanj cest." });
         await roadCol().deleteMany({});
-        const docs = req.body.map(item => ({
-            tip: item.tip ?? "", relacija: item.relacija ?? "", stanje: item.stanje ?? "", lastUpdated: new Date()
-        }));
+        const docs = req.body.map((item, index) => normalizeRoadDoc(item, index));
         if (docs.length > 0) await roadCol().insertMany(docs);
         await broadcastTrafficEvent("traffic:synced", { count: docs.length });
         res.json({ message: "Sinhronizirano " + docs.length + " zapisov stanja cest." });
@@ -346,6 +461,8 @@ async function startServer() {
         await client.connect();
         db = client.db('traffic_twin');
         await col().createIndex({ locationGeo: '2dsphere' });
+        await roadCol().createIndex({ id: 1 });
+        await userCol().createIndex({ email: 1 }, { unique: true });
         console.log("Uspešno povezan z MongoDB.");
 
         const publicUrl = process.env.PUBLIC_URL || "localhost";
