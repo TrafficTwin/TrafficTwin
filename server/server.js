@@ -207,6 +207,73 @@ function requireAdmin(req, res, next) {
     next();
 }
 
+function getCurrentUserEmail(req) {
+    return String(req.user?.sub ?? req.user?.email ?? "").toLowerCase();
+}
+
+async function ensureCurrentUserDoc(req) {
+    const email = getCurrentUserEmail(req);
+
+    if (!email) {
+        throw new Error("Uporabnik nima e-pošte v tokenu.");
+    }
+
+    await userCol().updateOne(
+        { email },
+        {
+            $setOnInsert: {
+                email,
+                name: req.user?.name ?? email,
+                role: req.user?.role ?? "user",
+                favouriteParkings: [],
+                favouriteRoads: []
+            }
+        },
+        { upsert: true }
+    );
+
+    return userCol().findOne({ email });
+}
+
+async function buildUserProfile(req) {
+    const user = await ensureCurrentUserDoc(req);
+
+    const favouriteParkingIds = Array.isArray(user.favouriteParkings)
+        ? user.favouriteParkings.map(Number).filter(Number.isFinite)
+        : [];
+
+    const favouriteRoadIds = Array.isArray(user.favouriteRoads)
+        ? user.favouriteRoads.map(String)
+        : [];
+
+    const [favouriteParkings, favouriteRoads] = await Promise.all([
+        favouriteParkingIds.length > 0
+            ? col().find(
+                { id: { $in: favouriteParkingIds } },
+                { projection: parkingProjection }
+            ).toArray()
+            : [],
+
+        favouriteRoadIds.length > 0
+            ? roadCol().find(
+                { id: { $in: favouriteRoadIds } },
+                { projection: { _id: 0 } }
+            ).toArray()
+            : []
+    ]);
+
+    return {
+        id: user._id?.toString(),
+        name: user.name ?? req.user?.name ?? "",
+        email: user.email,
+        role: user.role ?? req.user?.role ?? "user",
+        favouriteParkingIds,
+        favouriteRoadIds,
+        favouriteParkings,
+        favouriteRoads
+    };
+}
+
 // -------------------- AUTH --------------------
 
 app.post('/api/auth/register', async (req, res) => {
@@ -273,6 +340,14 @@ app.post('/api/auth/login', async (req, res) => {
         res.json({ token, user: { email: user.email, role: user.role, name: user.name } });
     } catch (err) {
         res.status(500).json({ error: "Napaka strežnika: " + err.message });
+    }
+});
+
+app.get('/api/users/me', requireAuth, async (req, res) => {
+    try {
+        res.json(await buildUserProfile(req));
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
 });
 
