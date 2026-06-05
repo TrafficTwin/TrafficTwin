@@ -8,6 +8,7 @@ import ParkingPage from "./pages/ParkingPage.jsx";
 import RoadsPage from "./pages/RoadsPage.jsx";
 import RegisterPage from "./pages/RegisterPage.jsx";
 import MapPage from "./pages/MapPage.jsx";
+import UserPage from "./pages/UserPage.jsx";
 
 function PrivateRoute({ children }) {
     const { user, loading } = useAuth();
@@ -36,6 +37,7 @@ function AppRoutes() {
             <Route path="/register" element={<RegisterPage />} />
             <Route element={<PrivateRoute><AppLayout /></PrivateRoute>}>
                 <Route path="/" element={<DashboardPage />} />
+                <Route path="/profil" element={<UserPage />} />
                 <Route path="/parking" element={<ParkingPage />} />
                 <Route path="/stanje-cest" element={<RoadsPage />} />
                 <Route path="/zemljevid" element={<MapPage />} />
