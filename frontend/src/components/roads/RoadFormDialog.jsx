@@ -4,7 +4,9 @@ import { useEffect, useState } from "react";
 const emptyRoad = {
     tip: "",
     relacija: "",
-    stanje: ""
+    stanje: "",
+    latitude: "",
+    longitude: ""
 };
 
 export default function RoadFormDialog({ road, onClose, onSave }) {
@@ -27,7 +29,9 @@ export default function RoadFormDialog({ road, onClose, onSave }) {
         onSave({
             tip: form.tip.trim(),
             relacija: form.relacija.trim(),
-            stanje: form.stanje.trim()
+            stanje: form.stanje.trim(),
+            latitude: form.latitude === "" ? null : Number(form.latitude),
+            longitude: form.longitude === "" ? null : Number(form.longitude)
         });
     }
 
@@ -60,6 +64,24 @@ export default function RoadFormDialog({ road, onClose, onSave }) {
                         value={form.stanje}
                         onChange={(event) => updateField("stanje", event.target.value)}
                         required
+                    />
+                </label>
+
+                <label>
+                    Latitude
+                    <input
+                        value={form.latitude ?? ""}
+                        onChange={(event) => updateField("latitude", event.target.value)}
+                        placeholder="46.5547"
+                    />
+                </label>
+
+                <label>
+                    Longitude
+                    <input
+                        value={form.longitude ?? ""}
+                        onChange={(event) => updateField("longitude", event.target.value)}
+                        placeholder="15.6459"
                     />
                 </label>
 
