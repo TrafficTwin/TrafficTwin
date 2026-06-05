@@ -495,3 +495,42 @@ button.danger {
         height: 480px;
     }
 }
+
+.profile-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.profile-value {
+    display: block;
+    margin-top: 8px;
+    font-size: 20px;
+}
+
+.profile-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.profile-section h3 {
+    margin: 0;
+    font-size: 22px;
+}
+
+button.favourite {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+button.favourite.active {
+    background: #fde68a;
+    color: #78350f;
+}
+
+@media (max-width: 900px) {
+    .profile-grid {
+        grid-template-columns: 1fr;
+    }
+}
