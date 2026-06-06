@@ -10,7 +10,7 @@ export default function AppLayout() {
             <aside className="sidebar">
                 <div>
                     <p className="eyebrow">TrafficTwin</p>
-                    <h1>Management</h1>
+                    <h1>Uporabniški vmesnik</h1>
                 </div>
 
                 <nav className="nav">

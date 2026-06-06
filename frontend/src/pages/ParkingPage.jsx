@@ -167,7 +167,7 @@ export default function ParkingPage() {
             <div className="page-header">
                 <div>
                     <p className="eyebrow">Parkirišča</p>
-                    <h2>Upravljanje parkirišč</h2>
+                    <h2>Pregled parkirišč</h2>
                 </div>
             </div>
 
