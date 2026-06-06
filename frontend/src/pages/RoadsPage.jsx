@@ -185,9 +185,12 @@ export default function RoadsPage() {
                 />
             ) : (
                 <div className="list">
-                    {visibleRoads.map((road) => (
+                    {visibleRoads.map((road, index) => (
                         <RoadCard
+                            key={road.id ?? `road-${index}`}
+
                             key={road.id ?? road.relacija}
+
                             road={road}
                             onEdit={() => handleEdit(road)}
                             onDelete={() => handleDelete(road)}
