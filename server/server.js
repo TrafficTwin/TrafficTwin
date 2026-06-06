@@ -73,6 +73,121 @@ function normalizeParkingDoc(raw) {
     return doc;
 }
 
+function slugify(value) {
+    return String(value ?? "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+}
+
+function createRoadId(item, index = 0) {
+    const slug = slugify(`${item.tip ?? ""}-${item.relacija ?? ""}`);
+    return slug ? `road-${slug}` : `road-${index}`;
+}
+
+function normalizePoint(point) {
+    if (Array.isArray(point)) {
+        const latitude = toNumber(point[0]);
+        const longitude = toNumber(point[1]);
+
+        if (hasValidCoordinates(latitude, longitude)) {
+            return [latitude, longitude];
+        }
+
+        return null;
+    }
+
+    const latitude = toNumber(point.latitude);
+    const longitude = toNumber(point.longitude);
+
+    if (hasValidCoordinates(latitude, longitude)) {
+        return [latitude, longitude];
+    }
+
+    return null;
+}
+
+function normalizeRoadCoordinates(item) {
+    const rawCoordinates = Array.isArray(item.coordinates)
+        ? item.coordinates
+        : Array.isArray(item.polyline)
+            ? item.polyline
+            : [];
+
+    return rawCoordinates
+        .map(normalizePoint)
+        .filter(Boolean);
+}
+
+function normalizeRoadDoc(item, index = 0) {
+    const latitude = toNumber(item.latitude);
+    const longitude = toNumber(item.longitude);
+    const hasPoint = hasValidCoordinates(latitude, longitude);
+
+    return {
+        id: item.id ?? createRoadId(item, index),
+        tip: item.tip ?? "",
+        relacija: item.relacija ?? "",
+        stanje: item.stanje ?? "",
+        latitude: hasPoint ? latitude : null,
+        longitude: hasPoint ? longitude : null,
+        coordinates: normalizeRoadCoordinates(item),
+        lastUpdated: new Date()
+    };
+}
+
+function normalizePoint(point) {
+    if (Array.isArray(point)) {
+        const latitude = toNumber(point[0]);
+        const longitude = toNumber(point[1]);
+
+        if (hasValidCoordinates(latitude, longitude)) {
+            return [latitude, longitude];
+        }
+
+        return null;
+    }
+
+    const latitude = toNumber(point.latitude);
+    const longitude = toNumber(point.longitude);
+
+    if (hasValidCoordinates(latitude, longitude)) {
+        return [latitude, longitude];
+    }
+
+    return null;
+}
+
+function normalizeRoadCoordinates(item) {
+    const rawCoordinates = Array.isArray(item.coordinates)
+        ? item.coordinates
+        : Array.isArray(item.polyline)
+            ? item.polyline
+            : [];
+
+    return rawCoordinates
+        .map(normalizePoint)
+        .filter(Boolean);
+}
+
+function normalizeRoadDoc(item) {
+    const latitude = toNumber(item.latitude);
+    const longitude = toNumber(item.longitude);
+    const hasPoint = hasValidCoordinates(latitude, longitude);
+
+    return {
+        tip: item.tip ?? "",
+        relacija: item.relacija ?? "",
+        stanje: item.stanje ?? "",
+        latitude: hasPoint ? latitude : null,
+        longitude: hasPoint ? longitude : null,
+        coordinates: normalizeRoadCoordinates(item),
+        lastUpdated: new Date()
+    };
+}
+
 // -------------------- JWT MIDDLEWARE --------------------
 
 function requireAuth(req, res, next) {
@@ -93,6 +208,73 @@ function requireAdmin(req, res, next) {
         return res.status(403).json({ error: "Dostop dovoljen samo administratorjem." });
     }
     next();
+}
+
+function getCurrentUserEmail(req) {
+    return String(req.user?.sub ?? req.user?.email ?? "").toLowerCase();
+}
+
+async function ensureCurrentUserDoc(req) {
+    const email = getCurrentUserEmail(req);
+
+    if (!email) {
+        throw new Error("Uporabnik nima e-pošte v tokenu.");
+    }
+
+    await userCol().updateOne(
+        { email },
+        {
+            $setOnInsert: {
+                email,
+                name: req.user?.name ?? email,
+                role: req.user?.role ?? "user",
+                favouriteParkings: [],
+                favouriteRoads: []
+            }
+        },
+        { upsert: true }
+    );
+
+    return userCol().findOne({ email });
+}
+
+async function buildUserProfile(req) {
+    const user = await ensureCurrentUserDoc(req);
+
+    const favouriteParkingIds = Array.isArray(user.favouriteParkings)
+        ? user.favouriteParkings.map(Number).filter(Number.isFinite)
+        : [];
+
+    const favouriteRoadIds = Array.isArray(user.favouriteRoads)
+        ? user.favouriteRoads.map(String)
+        : [];
+
+    const [favouriteParkings, favouriteRoads] = await Promise.all([
+        favouriteParkingIds.length > 0
+            ? col().find(
+                { id: { $in: favouriteParkingIds } },
+                { projection: parkingProjection }
+            ).toArray()
+            : [],
+
+        favouriteRoadIds.length > 0
+            ? roadCol().find(
+                { id: { $in: favouriteRoadIds } },
+                { projection: { _id: 0 } }
+            ).toArray()
+            : []
+    ]);
+
+    return {
+        id: user._id?.toString(),
+        name: user.name ?? req.user?.name ?? "",
+        email: user.email,
+        role: user.role ?? req.user?.role ?? "user",
+        favouriteParkingIds,
+        favouriteRoadIds,
+        favouriteParkings,
+        favouriteRoads
+    };
 }
 
 // -------------------- AUTH --------------------
@@ -116,7 +298,9 @@ app.post('/api/auth/register', async (req, res) => {
             email: email.toLowerCase(),
             password: hashedPassword,
             role: "user",
-            name
+            name,
+            favouriteParkings: [],
+            favouriteRoads: []
         });
 
         res.status(201).json({ message: "Registracija uspešna." });
@@ -159,6 +343,106 @@ app.post('/api/auth/login', async (req, res) => {
         res.json({ token, user: { email: user.email, role: user.role, name: user.name } });
     } catch (err) {
         res.status(500).json({ error: "Napaka strežnika: " + err.message });
+    }
+});
+
+app.get('/api/users/me', requireAuth, async (req, res) => {
+    try {
+        res.json(await buildUserProfile(req));
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/users/me/favourites/parking/:parkingId', requireAuth, async (req, res) => {
+    try {
+        const parkingId = Number(req.params.parkingId);
+
+        if (!Number.isFinite(parkingId)) {
+            return res.status(400).json({ error: "Neveljaven ID parkirišča." });
+        }
+
+        const parking = await col().findOne({ id: parkingId });
+
+        if (!parking) {
+            return res.status(404).json({ error: "Parkirišče ne obstaja." });
+        }
+
+        const email = getCurrentUserEmail(req);
+        await ensureCurrentUserDoc(req);
+
+        await userCol().updateOne(
+            { email },
+            { $addToSet: { favouriteParkings: parkingId } }
+        );
+
+        res.json(await buildUserProfile(req));
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.delete('/api/users/me/favourites/parking/:parkingId', requireAuth, async (req, res) => {
+    try {
+        const parkingId = Number(req.params.parkingId);
+
+        if (!Number.isFinite(parkingId)) {
+            return res.status(400).json({ error: "Neveljaven ID parkirišča." });
+        }
+
+        const email = getCurrentUserEmail(req);
+        await ensureCurrentUserDoc(req);
+
+        await userCol().updateOne(
+            { email },
+            { $pull: { favouriteParkings: parkingId } }
+        );
+
+        res.json(await buildUserProfile(req));
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/users/me/favourites/road/:roadId', requireAuth, async (req, res) => {
+    try {
+        const roadId = String(req.params.roadId);
+
+        const road = await roadCol().findOne({ id: roadId });
+
+        if (!road) {
+            return res.status(404).json({ error: "Cesta ne obstaja." });
+        }
+
+        const email = getCurrentUserEmail(req);
+        await ensureCurrentUserDoc(req);
+
+        await userCol().updateOne(
+            { email },
+            { $addToSet: { favouriteRoads: roadId } }
+        );
+
+        res.json(await buildUserProfile(req));
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.delete('/api/users/me/favourites/road/:roadId', requireAuth, async (req, res) => {
+    try {
+        const roadId = String(req.params.roadId);
+
+        const email = getCurrentUserEmail(req);
+        await ensureCurrentUserDoc(req);
+
+        await userCol().updateOne(
+            { email },
+            { $pull: { favouriteRoads: roadId } }
+        );
+
+        res.json(await buildUserProfile(req));
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
 });
 
@@ -325,9 +609,7 @@ app.post('/api/stanje-cest/sync',     requireAuth, requireAdmin, async (req, res
     try {
         if (!Array.isArray(req.body)) return res.status(400).json({ error: "Pričakovan je seznam stanj cest." });
         await roadCol().deleteMany({});
-        const docs = req.body.map(item => ({
-            tip: item.tip ?? "", relacija: item.relacija ?? "", stanje: item.stanje ?? "", lastUpdated: new Date()
-        }));
+        const docs = req.body.map((item, index) => normalizeRoadDoc(item, index));
         if (docs.length > 0) await roadCol().insertMany(docs);
         await broadcastTrafficEvent("traffic:synced", { count: docs.length });
         res.json({ message: "Sinhronizirano " + docs.length + " zapisov stanja cest." });
@@ -349,6 +631,8 @@ async function startServer() {
         await client.connect();
         db = client.db('traffic_twin');
         await col().createIndex({ locationGeo: '2dsphere' });
+        await roadCol().createIndex({ id: 1 });
+        await userCol().createIndex({ email: 1 }, { unique: true });
         console.log("Uspešno povezan z MongoDB.");
 
         const publicUrl = process.env.PUBLIC_URL || "localhost";
