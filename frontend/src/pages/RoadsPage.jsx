@@ -131,9 +131,13 @@ export default function RoadsPage() {
                 />
             ) : (
                 <div className="list">
-                    {visibleRoads.map((road) => (
+                    {visibleRoads.map((road, index) => (
                         <RoadCard
+<<<<<<< Updated upstream
                             key={road.relacija || Math.random()} 
+=======
+                            key={road.id ?? `road-${index}`}
+>>>>>>> Stashed changes
                             road={road}
                             onEdit={() => handleEdit(road)}
                             onDelete={() => handleDelete(road)}
