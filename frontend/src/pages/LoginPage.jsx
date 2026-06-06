@@ -13,7 +13,7 @@ export default function LoginPage() {
 
     async function handleSubmit(e) {
         e.preventDefault();
-        if (!email || !password) { setError("Izpolni oba polja."); return; }
+        if (!email || !password) { setError("Izpolni obe polji."); return; }
         try {
             setError("");
             setLoading(true);
@@ -28,10 +28,10 @@ export default function LoginPage() {
     return (
         <div className="login-root">
             <div className="panel login-card">
-                <p className="eyebrow" style={{ marginBottom: "4px" }}>SmartCity</p>
+                <p className="eyebrow" style={{ marginBottom: "4px" }}>TrafficTwin</p>
                 <h2 style={{ margin: "0 0 4px" }}>Prijava</h2>
                 <p style={{ margin: "0 0 20px", color: "#64748b", fontSize: "14px" }}>
-                    Dostop do nadzorne plošče
+                    Dostop do uporabniškega vmesnika
                 </p>
 
                 {error && <div className="error-box" style={{ marginBottom: "16px" }}>{error}</div>}
@@ -69,7 +69,7 @@ export default function LoginPage() {
                                 className="login-eye"
                                 aria-label={showPassword ? "Skrij geslo" : "Pokaži geslo"}
                             >
-                                {showPassword ? "🙈" : "👁"}
+                                {showPassword ? "✗" : "👁"}
                             </button>
                         </div>
                     </label>
@@ -95,10 +95,7 @@ export default function LoginPage() {
     </button>
 </div>
 
-                <div className="info-box" style={{ marginTop: "20px", fontSize: "13px" }}>
-                    <strong style={{ display: "block", marginBottom: "6px" }}>Testni računi</strong>
-                    <div><span className="login-badge login-badge--admin">admin</span> admin@city.si / admin123</div>
-                </div>
+
             </div>
         </div>
     );
