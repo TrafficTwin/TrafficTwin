@@ -41,6 +41,26 @@ export default function ParkingFormDialog({ parking, onClose, onSave }) {
     function submit(event) {
         event.preventDefault();
 
+        const capacity = Number(form.capacity);
+        const occupied = Number(form.occupied);
+        const location = form.location.trim();
+
+        if (!location) {
+            alert("Lokacija ne sme biti prazna!");
+        return;
+        
+
+        if (capacity < 0) {
+            alert("Kapaciteta ne sme biti manjša od 0!");
+            return;
+        }
+
+        if (occupied > capacity) {
+            alert("Zasedenost ne sme presegati kapacitete!");
+            return;
+        }
+
+
         onSave({
             id: Number(form.id),
             location: form.location.trim(),
