@@ -8,17 +8,12 @@ services:
       - mongo-data:/data/db
 
   app:
-    build: ./server  
+    image: vidmadjar/traffictwin-server:latest  
     container_name: traffic_twin_app2
     ports:
       - "3000:3000"
-    environment:
-      - MONGO_URI=mongodb+srv://TafficTwin_db_user:65mongoDB@traffictwin.nuzhlpi.mongodb.net/traffic_twin?appName=TrafficTwin
-      - API_URL=http://localhost:3000
-      - JWT_SECRET=traffic_twin_super_secret_kljuc_2024
-      - ADMIN_EMAIL=admin@city.si
-      - ADMIN_PASSWORD=admin123
-      - SCRAPER_TOKEN=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzY3JhcGVyIiwicm9sZSI6ImFkbWluIiwibmFtZSI6IktvdGxpbiBTY3JhcGVyIiwiaWF0IjoxNzgwNDg0MjAwLCJleHAiOjE4MTIwMjAyMDB9.VAOcP4PN05RfdnG0NUcPQ6hOPvDY-mw7pua9T3PKBaQ
+    env_file:
+      - .env
     depends_on:
       - mongodb
 

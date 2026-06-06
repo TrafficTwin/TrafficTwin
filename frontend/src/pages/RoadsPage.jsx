@@ -9,7 +9,11 @@ import {
     getRoadStates,
     syncRoadStates
 } from "../services/roadsApi.js";
-import { AuthContext } from "../context/AuthContext";
+import {
+    addFavouriteRoad,
+    getCurrentUserProfile,
+    removeFavouriteRoad
+} from "../services/userApi.js";
 
 export default function RoadsPage() {
     const [roadStates, setRoadStates] = useState([]);
@@ -19,6 +23,27 @@ export default function RoadsPage() {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
+    const [favouriteRoadIds, setFavouriteRoadIds] = useState([]);
+
+    function createRoadClientId(road) {
+        const slug = String(`${road.tip ?? ""}-${road.relacija ?? ""}`)
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/^-+|-+$/g, "");
+
+        return slug ? `road-${slug}` : `road-${Date.now()}`;
+    }
+
+    async function loadFavourites() {
+        try {
+            const profile = await getCurrentUserProfile();
+            setFavouriteRoadIds(profile.favouriteRoadIds ?? []);
+        } catch (err) {
+            setError(err.message);
+        }
+    }
 
   async function loadRoadStates() {
     try {
@@ -37,6 +62,7 @@ export default function RoadsPage() {
 
     useEffect(() => {
         loadRoadStates();
+        loadFavourites();
     }, []);
 
     const visibleRoads = useMemo(() => {
@@ -62,15 +88,19 @@ export default function RoadsPage() {
     }
 
     function handleSave(road) {
+        const roadWithId = {
+            ...road,
+            id: road.id ?? createRoadClientId(road)
+        };
+
         setRoadStates((current) => {
             if (editingRoad == null) {
-                // Novo dodano
-                return [...current, road];
+                return [...current, roadWithId];
             } else {
-                // Posodobljeno
-                return current.map((item) => (item === editingRoad ? road : item));
+                return current.map((item) => (item === editingRoad ? roadWithId : item));
             }
         });
+
         setIsDialogOpen(false);
         setEditingRoad(null);
     }
@@ -96,6 +126,30 @@ export default function RoadsPage() {
             setError("");
             await clearRoadStates();
             setRoadStates([]);
+        } catch (err) {
+            setError(err.message);
+        }
+    }
+    async function handleToggleFavourite(road) {
+        try {
+            setError("");
+
+            if (!road.id) {
+                setError("Cesta nima ID-ja. Najprej jo shrani oziroma sinhroniziraj.");
+                return;
+            }
+
+            const isFavourite = favouriteRoadIds.includes(road.id);
+
+            if (isFavourite) {
+                await removeFavouriteRoad(road.id);
+                setFavouriteRoadIds((current) =>
+                    current.filter((id) => id !== road.id)
+                );
+            } else {
+                await addFavouriteRoad(road.id);
+                setFavouriteRoadIds((current) => [...current, road.id]);
+            }
         } catch (err) {
             setError(err.message);
         }
@@ -133,14 +187,15 @@ export default function RoadsPage() {
                 <div className="list">
                     {visibleRoads.map((road, index) => (
                         <RoadCard
-<<<<<<< Updated upstream
-                            key={road.relacija || Math.random()} 
-=======
                             key={road.id ?? `road-${index}`}
->>>>>>> Stashed changes
+
+                            key={road.id ?? road.relacija}
+
                             road={road}
                             onEdit={() => handleEdit(road)}
                             onDelete={() => handleDelete(road)}
+                            isFavourite={favouriteRoadIds.includes(road.id)}
+                            onToggleFavourite={handleToggleFavourite}
                         />
                     ))}
                 </div>
