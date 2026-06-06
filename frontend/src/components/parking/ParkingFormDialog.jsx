@@ -48,7 +48,7 @@ export default function ParkingFormDialog({ parking, onClose, onSave }) {
         if (!location) {
             alert("Lokacija ne sme biti prazna!");
         return;
-        
+        }
 
         if (capacity < 0) {
             alert("Kapaciteta ne sme biti manjša od 0!");
