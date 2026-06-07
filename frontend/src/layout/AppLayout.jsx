@@ -10,13 +10,15 @@ export default function AppLayout() {
             <aside className="sidebar">
                 <div>
                     <p className="eyebrow">TrafficTwin</p>
-                    <h1>Management</h1>
+                    <h1>Uporabniški vmesnik</h1>
                 </div>
 
                 <nav className="nav">
                     <NavLink to="/">Pregled</NavLink>
+                    <NavLink to="/profil">Profil</NavLink>
                     <NavLink to="/parking">Parkirišča</NavLink>
                     <NavLink to="/stanje-cest">Stanje cest</NavLink>
+                    <NavLink to="/zemljevid">Zemljevid</NavLink>
                 </nav>
 
                 <div className="sidebar-user">

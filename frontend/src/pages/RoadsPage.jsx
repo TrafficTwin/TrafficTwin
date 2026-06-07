@@ -83,15 +83,27 @@ export default function RoadsPage() {
         setIsDialogOpen(true);
     }
 
+<<<<<<< HEAD
     async function handleSave(road) {
+=======
+    function handleSave(road) {
+>>>>>>> origin/dev
         const roadWithId = {
             ...road,
             id: road.id ?? createRoadClientId(road)
         };
+<<<<<<< HEAD
         try {
             setError("");
             if (editingRoad != null && roadWithId.id) {
                 await updateRoadState(roadWithId.id, roadWithId);
+=======
+        setRoadStates((current) => {
+            if (editingRoad == null) {
+                return [...current, roadWithId];
+            } else {
+                return current.map((item) => (item === editingRoad ? roadWithId : item));
+>>>>>>> origin/dev
             }
             setRoadStates((current) => {
                 if (editingRoad == null) {
@@ -160,7 +172,7 @@ export default function RoadsPage() {
             <div className="page-header">
                 <div>
                     <p className="eyebrow">Stanje cest</p>
-                    <h2>Upravljanje stanja cest</h2>
+                    <h2>Pregled stanj cest</h2>
                 </div>
             </div>
 
