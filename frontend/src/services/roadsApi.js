@@ -16,3 +16,11 @@ export function clearRoadStates() {
         method: "DELETE"
     });
 }
+
+
+export function updateRoadState(id, road) {
+    return apiRequest(`/api/stanje-cest/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(road)
+    });
+}

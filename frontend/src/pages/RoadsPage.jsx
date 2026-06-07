@@ -3,11 +3,11 @@ import EmptyState from "../components/common/EmptyState.jsx";
 import RoadCard from "../components/roads/RoadCard.jsx";
 import RoadFormDialog from "../components/roads/RoadFormDialog.jsx";
 import RoadToolbar from "../components/roads/RoadToolbar.jsx";
-
 import {
     clearRoadStates,
     getRoadStates,
-    syncRoadStates
+    syncRoadStates,
+    updateRoadState
 } from "../services/roadsApi.js";
 import {
     addFavouriteRoad,
@@ -83,23 +83,45 @@ export default function RoadsPage() {
         setIsDialogOpen(true);
     }
 
+<<<<<<< HEAD
+    async function handleSave(road) {
+=======
     function handleSave(road) {
+>>>>>>> origin/dev
         const roadWithId = {
             ...road,
             id: road.id ?? createRoadClientId(road)
         };
+<<<<<<< HEAD
+        try {
+            setError("");
+            if (editingRoad != null && roadWithId.id) {
+                await updateRoadState(roadWithId.id, roadWithId);
+=======
         setRoadStates((current) => {
             if (editingRoad == null) {
                 return [...current, roadWithId];
             } else {
                 return current.map((item) => (item === editingRoad ? roadWithId : item));
+>>>>>>> origin/dev
             }
-        });
-        setIsDialogOpen(false);
-        setEditingRoad(null);
+            setRoadStates((current) => {
+                if (editingRoad == null) {
+                    return [...current, roadWithId];
+                } else {
+                    return current.map((item) => (item === editingRoad ? roadWithId : item));
+                }
+            });
+            setIsDialogOpen(false);
+            setEditingRoad(null);
+        } catch (err) {
+            setError(err.message);
+        }
     }
 
     function handleDelete(roadToDelete) {
+        const confirmed = window.confirm("Res želiš izbrisati stanje ceste?");
+        if (!confirmed) return;
         setRoadStates((current) => current.filter((r) => r !== roadToDelete));
     }
 

@@ -624,6 +624,19 @@ app.delete('/api/stanje-cest',        requireAuth, requireAdmin, async (req, res
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+app.put('/api/stanje-cest/:id', requireAuth, requireAdmin, async (req, res) => {
+    try {
+        const id = String(req.params.id);
+        const result = await roadCol().findOneAndUpdate(
+            { id },
+            { $set: normalizeRoadDoc({ ...req.body, id }) },
+            { returnDocument: 'after', projection: { _id: 0 } }
+        );
+        if (!result) return res.status(404).json({ error: "Ni najdeno." });
+        await broadcastTrafficEvent("traffic:updated", { id, road: result });
+        res.json({ message: "Posodobljeno." });
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
 // -------------------- START --------------------
 
 async function startServer() {
