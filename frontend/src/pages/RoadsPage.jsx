@@ -83,27 +83,15 @@ export default function RoadsPage() {
         setIsDialogOpen(true);
     }
 
-<<<<<<< HEAD
     async function handleSave(road) {
-=======
-    function handleSave(road) {
->>>>>>> origin/dev
         const roadWithId = {
             ...road,
             id: road.id ?? createRoadClientId(road)
         };
-<<<<<<< HEAD
         try {
             setError("");
             if (editingRoad != null && roadWithId.id) {
                 await updateRoadState(roadWithId.id, roadWithId);
-=======
-        setRoadStates((current) => {
-            if (editingRoad == null) {
-                return [...current, roadWithId];
-            } else {
-                return current.map((item) => (item === editingRoad ? roadWithId : item));
->>>>>>> origin/dev
             }
             setRoadStates((current) => {
                 if (editingRoad == null) {
