@@ -160,7 +160,7 @@ export default function RoadsPage() {
             <div className="page-header">
                 <div>
                     <p className="eyebrow">Stanje cest</p>
-                    <h2>Upravljanje stanja cest</h2>
+                    <h2>Pregled stanj cest</h2>
                 </div>
             </div>
 

@@ -12,6 +12,11 @@ import {
     getParking,
     updateParking
 } from "../services/parkingApi.js";
+import {
+    addFavouriteParking,
+    getCurrentUserProfile,
+    removeFavouriteParking
+} from "../services/userApi.js";
 
 export default function ParkingPage() {
     const { isAdmin } = useAuth();
@@ -25,6 +30,16 @@ export default function ParkingPage() {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
+    const [favouriteParkingIds, setFavouriteParkingIds] = useState([]);
+
+    async function loadFavourites() {
+        try {
+            const profile = await getCurrentUserProfile();
+            setFavouriteParkingIds(profile.favouriteParkingIds ?? []);
+        } catch (err) {
+            setError(err.message);
+        }
+    }
 
     async function loadParking() {
         try {
@@ -41,6 +56,7 @@ export default function ParkingPage() {
 
     useEffect(() => {
         loadParking();
+        loadFavourites();
     }, []);
 
     const visibleParking = useMemo(() => {
@@ -60,6 +76,27 @@ export default function ParkingPage() {
                 return a.location.localeCompare(b.location);
             });
     }, [parkingLots, search, sortMode]);
+
+    async function handleToggleFavourite(parking) {
+        try {
+            setError("");
+
+            const parkingId = Number(parking.id);
+            const isFavourite = favouriteParkingIds.includes(parkingId);
+
+            if (isFavourite) {
+                await removeFavouriteParking(parkingId);
+                setFavouriteParkingIds((current) =>
+                    current.filter((id) => id !== parkingId)
+                );
+            } else {
+                await addFavouriteParking(parkingId);
+                setFavouriteParkingIds((current) => [...current, parkingId]);
+            }
+        } catch (err) {
+            setError(err.message);
+        }
+    }
 
     async function handleNearby() {
         const lat = Number(latitude);
@@ -130,7 +167,7 @@ export default function ParkingPage() {
             <div className="page-header">
                 <div>
                     <p className="eyebrow">Parkirišča</p>
-                    <h2>Upravljanje parkirišč</h2>
+                    <h2>Pregled parkirišč</h2>
                 </div>
             </div>
 
@@ -165,7 +202,9 @@ export default function ParkingPage() {
                             key={parking.id}
                             parking={parking}
                             onEdit={isAdmin ? handleEdit : null}
-                            onDelete={isAdmin ? handleEdit : null}
+                            onDelete={isAdmin ? handleDelete : null}
+                            isFavourite={favouriteParkingIds.includes(Number(parking.id))}
+                            onToggleFavourite={handleToggleFavourite}
                         />
                     ))}
                 </div>

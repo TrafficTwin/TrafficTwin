@@ -34,7 +34,7 @@ export default function DashboardPage() {
             <div className="page-header">
                 <div>
                     <p className="eyebrow">Pregled</p>
-                    <h2>Nadzorna plošča</h2>
+                    <h2>Pregledna stran</h2>
                 </div>
             </div>
 
