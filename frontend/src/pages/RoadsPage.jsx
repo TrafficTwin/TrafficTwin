@@ -3,13 +3,14 @@ import EmptyState from "../components/common/EmptyState.jsx";
 import RoadCard from "../components/roads/RoadCard.jsx";
 import RoadFormDialog from "../components/roads/RoadFormDialog.jsx";
 import RoadToolbar from "../components/roads/RoadToolbar.jsx";
-
 import {
     clearRoadStates,
     getRoadStates,
-    syncRoadStates
+    syncRoadStates,
+    updateRoadState
 } from "../services/roadsApi.js";
 import { AuthContext } from "../context/AuthContext";
+
 
 export default function RoadsPage() {
     const [roadStates, setRoadStates] = useState([]);
@@ -20,6 +21,7 @@ export default function RoadsPage() {
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
 
+<<<<<<< Updated upstream
   async function loadRoadStates() {
     try {
         setLoading(true);
@@ -32,6 +34,38 @@ export default function RoadsPage() {
         setError(err.message);
     } finally {
         setLoading(false);
+=======
+    function createRoadClientId(road) {
+        const slug = String(`${road.tip ?? ""}-${road.relacija ?? ""}`)
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/^-+|-+$/g, "");
+        return slug ? `road-${slug}` : `road-${Date.now()}`;
+    }
+
+    
+    async function loadFavourites() {
+        try {
+            const profile = await getCurrentUserProfile();
+            setFavouriteRoadIds(profile.favouriteRoadIds ?? []);
+        } catch (err) {
+            setError(err.message);
+        }
+    }
+
+    async function loadRoadStates() {
+        try {
+            setLoading(true);
+            const data = await getRoadStates();
+            setRoadStates(data ?? []);
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+>>>>>>> Stashed changes
     }
 }
 
@@ -61,7 +95,21 @@ export default function RoadsPage() {
         setIsDialogOpen(true);
     }
 
+<<<<<<< Updated upstream
     function handleSave(road) {
+=======
+    async function handleSave(road) {
+    const roadWithId = {
+        ...road,
+        id: road.id ?? createRoadClientId(road)
+    };
+
+    try {
+        setError("");
+        if (editingRoad != null && roadWithId.id) {
+            await updateRoadState(roadWithId.id, roadWithId);
+        }
+>>>>>>> Stashed changes
         setRoadStates((current) => {
             if (editingRoad == null) {
                 // Novo dodano
@@ -73,11 +121,15 @@ export default function RoadsPage() {
         });
         setIsDialogOpen(false);
         setEditingRoad(null);
+    } catch (err) {
+        setError(err.message);
     }
-
-    function handleDelete(roadToDelete) {
-        setRoadStates((current) => current.filter((r) => r !== roadToDelete));
-    }
+}
+function handleDelete(roadToDelete) {
+    const confirmed = window.confirm("Res želiš izbrisati stanje ceste?");
+    if (!confirmed) return;
+    setRoadStates((current) => current.filter((r) => r !== roadToDelete));
+}
 
     async function handleSync() {
         try {
