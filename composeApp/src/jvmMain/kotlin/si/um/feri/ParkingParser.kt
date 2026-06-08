@@ -24,14 +24,24 @@ val fencedParkingUrl = "https://prostor.maribor.si/ows/public/wfs?" +
         "&typeName=public:mom_parkirisca_ograjena_p" +
         "&outputFormat=application/json&srsName=EPSG:4326"
 
+
 data class Parking(
     val id: Int,
     val location: String,
     val typeOfPayment: String,
     val capacity: Int,
     val occupied: Int,
+    val latitude: Double? = null,
+    val longitude: Double? = null,
     val lengthOfParking: List<Pair<Double, Double>> = emptyList()
 )
+
+fun centerOf(points: List<Pair<Double, Double>>): Pair<Double, Double>? {
+    if (points.isEmpty()) return null
+    val latitude = points.map { it.first }.average()
+    val longitude = points.map { it.second }.average()
+    return latitude to longitude
+}
 
 fun sendToApi(data: List<Parking>) {
     val client = OkHttpClient()
@@ -42,7 +52,9 @@ fun sendToApi(data: List<Parking>) {
             location = p.location,
             typeOfPayment = p.typeOfPayment,
             capacity = p.capacity,
-            occupied = p.occupied
+            occupied = p.occupied,
+            latitude = p.latitude,
+            longitude = p.longitude
         )
     }
     val json = gson.toJson(dtoList)
@@ -50,6 +62,7 @@ fun sendToApi(data: List<Parking>) {
     val request = Request.Builder()
         .url("${ApiConfig.baseUrl}/api/parking/sync")
         .post(body)
+        .addHeader("Authorization", "Bearer ${ApiConfig.scraperToken}")
         .build()
     try {
         client.newCall(request).execute().use { response ->
@@ -91,6 +104,7 @@ fun parseStreetParking(jsonString: String, isPaid: Boolean): List<Parking> {
         if (cap <= 0) cap = (10..40).random()
         val occ = (0..cap).random()
         val streetName = properties.optString("lokacija", properties.optString("ulica", "Unknown Location"))
+        val center = centerOf(polyline)
         parkingList.add(
             Parking(
                 id = item.getString("id").hashCode(),
@@ -98,6 +112,8 @@ fun parseStreetParking(jsonString: String, isPaid: Boolean): List<Parking> {
                 typeOfPayment = if (isPaid) "PAYABLE (ZONE)" else "FREE",
                 capacity = cap,
                 occupied = occ,
+                latitude = center?.first,
+                longitude = center?.second,
                 lengthOfParking = polyline
             )
         )
@@ -123,6 +139,7 @@ fun parseFencedParking(jsonString: String): List<Parking> {
         var cap = properties.optString("st_park_m", "0").toIntOrNull() ?: 0
         if (cap <= 0) cap = (50..150).random()
         val occ = (0..(cap / 2)).random()
+        val center = centerOf(points)
         parkingList.add(
             Parking(
                 id = item.getString("id").hashCode(),
@@ -130,6 +147,8 @@ fun parseFencedParking(jsonString: String): List<Parking> {
                 typeOfPayment = "PAYABLE",
                 capacity = cap,
                 occupied = occ,
+                latitude = center?.first,
+                longitude = center?.second,
                 lengthOfParking = points
             )
         )

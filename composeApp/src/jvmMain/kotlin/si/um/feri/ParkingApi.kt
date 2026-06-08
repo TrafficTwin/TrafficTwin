@@ -11,7 +11,10 @@ data class ParkingDto(
     val location: String,
     val typeOfPayment: String,
     val capacity: Int,
-    val occupied: Int = 0
+    val occupied: Int = 0,
+    val latitude: Double? = null,
+    val longitude: Double? = null,
+    val distanceMeters: Double? = null
 )
 
 object ParkingApi {
@@ -20,8 +23,11 @@ object ParkingApi {
     private val JSON = "application/json; charset=utf-8".toMediaType()
     private val BASE: String get() = ApiConfig.baseUrl
 
+    private fun Request.Builder.withAuth() =
+        addHeader("Authorization", "Bearer ${ApiConfig.scraperToken}")
+
     fun getAll(): List<ParkingDto> {
-        val req = Request.Builder().url("$BASE/api/parking").get().build()
+        val req = Request.Builder().url("$BASE/api/parking").get().withAuth().build()
         val body = client.newCall(req).execute().use { it.body!!.string() }
         val type = object : TypeToken<List<ParkingDto>>() {}.type
         return gson.fromJson(body, type)
@@ -29,24 +35,24 @@ object ParkingApi {
 
     fun add(p: ParkingDto): Boolean {
         val body = gson.toJson(p).toRequestBody(JSON)
-        val req = Request.Builder().url("$BASE/api/parking").post(body).build()
+        val req = Request.Builder().url("$BASE/api/parking").post(body).withAuth().build()
         return client.newCall(req).execute().use { it.isSuccessful }
     }
 
     fun update(id: Int, p: ParkingDto): Boolean {
         val body = gson.toJson(p).toRequestBody(JSON)
-        val req = Request.Builder().url("$BASE/api/parking/$id").put(body).build()
+        val req = Request.Builder().url("$BASE/api/parking/$id").put(body).withAuth().build()
         return client.newCall(req).execute().use { it.isSuccessful }
     }
 
     fun delete(id: Int): Boolean {
-        val req = Request.Builder().url("$BASE/api/parking/$id").delete().build()
+        val req = Request.Builder().url("$BASE/api/parking/$id").delete().withAuth().build()
         return client.newCall(req).execute().use { it.isSuccessful }
     }
 
     fun sync(list: List<ParkingDto>): Boolean {
         val body = gson.toJson(list).toRequestBody(JSON)
-        val req = Request.Builder().url("$BASE/api/parking/sync").post(body).build()
+        val req = Request.Builder().url("$BASE/api/parking/sync").post(body).withAuth().build()
         return client.newCall(req).execute().use { it.isSuccessful }
     }
 
@@ -55,6 +61,19 @@ object ParkingApi {
         location = p.location,
         typeOfPayment = p.typeOfPayment,
         capacity = p.capacity,
-        occupied = occupied
+        occupied = occupied,
+        latitude = p.latitude,
+        longitude = p.longitude
     )
+
+    fun getNearby(latitude: Double, longitude: Double, radiusMeters: Int): List<ParkingDto> {
+        val req = Request.Builder()
+            .url("$BASE/api/parking/nearby?lat=$latitude&lon=$longitude&radius=$radiusMeters")
+            .get()
+            .withAuth()
+            .build()
+        val body = client.newCall(req).execute().use { it.body!!.string() }
+        val type = object : TypeToken<List<ParkingDto>>() {}.type
+        return gson.fromJson(body, type)
+    }
 }

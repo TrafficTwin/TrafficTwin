@@ -11,21 +11,19 @@ object StanjeApi {
     private val client = OkHttpClient()
     private val gson = Gson()
     private val JSON = "application/json; charset=utf-8".toMediaType()
-    private const val BASE = "http://127.0.0.1:3000"
 
     fun getAll(): List<StanjeCeste> {
         val req = Request.Builder()
-            .url("$BASE/api/stanje-cest")
+            .url("${ApiConfig.baseUrl}/api/stanje-cest")
             .get()
+            .addHeader("Authorization", "Bearer ${ApiConfig.scraperToken}")
             .build()
 
         client.newCall(req).execute().use { response ->
             val body = response.body?.string().orEmpty()
-
             if (!response.isSuccessful) {
                 error("Napaka pri branju stanja cest: ${response.code} $body")
             }
-
             val type = object : TypeToken<List<StanjeCeste>>() {}.type
             return gson.fromJson(body, type) ?: emptyList()
         }
@@ -35,8 +33,9 @@ object StanjeApi {
         val body = gson.toJson(list).toRequestBody(JSON)
 
         val req = Request.Builder()
-            .url("$BASE/api/stanje-cest/sync")
+            .url("${ApiConfig.baseUrl}/api/stanje-cest/sync")
             .post(body)
+            .addHeader("Authorization", "Bearer ${ApiConfig.scraperToken}")
             .build()
 
         client.newCall(req).execute().use { response ->
@@ -44,15 +43,15 @@ object StanjeApi {
                 println("Napaka pri shranjevanju stanja cest: ${response.code}")
                 println(response.body?.string().orEmpty())
             }
-
             return response.isSuccessful
         }
     }
 
     fun clear(): Boolean {
         val req = Request.Builder()
-            .url("$BASE/api/stanje-cest")
+            .url("${ApiConfig.baseUrl}/api/stanje-cest")
             .delete()
+            .addHeader("Authorization", "Bearer ${ApiConfig.scraperToken}")
             .build()
 
         client.newCall(req).execute().use { response ->

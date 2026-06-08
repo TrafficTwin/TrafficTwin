@@ -1,0 +1,55 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {"type": "LineString", "coordinates": [[16.15, 46.66], [16.1608, 46.6624], [16.17, 46.665]]},
+      "properties": {"dslType": "road", "city": "TrafficTwin demo", "name": "Cesta do centra", "roadType": "mestna", "relation": "avtobusna postaja - center", "state": "congested", "lanes": 2, "speedLimit": 30, "source": "manual", "geometrySource": "PolylineGeometry"}
+    },
+    {
+      "type": "Feature",
+      "geometry": {"type": "LineString", "coordinates": [[16.155, 46.661], [16.158, 46.6618]]},
+      "properties": {"dslType": "road", "city": "TrafficTwin demo", "name": "Zaprta servisna cesta", "roadType": "servisna", "relation": "skladisce - center", "state": "closed", "geometrySource": "LineGeometry"}
+    },
+    {
+      "type": "Feature",
+      "geometry": {"type": "Polygon", "coordinates": [[[16.158, 46.661], [16.1595, 46.661], [16.1595, 46.662], [16.158, 46.662], [16.158, 46.661]]]},
+      "properties": {"dslType": "building", "city": "TrafficTwin demo", "name": "Obcina", "type": "public", "geometrySource": "PolygonGeometry"}
+    },
+    {
+      "type": "Feature",
+      "geometry": {"type": "Polygon", "coordinates": [[[16.162, 46.662], [16.164, 46.662], [16.164, 46.664], [16.162, 46.664], [16.162, 46.662]]]},
+      "properties": {"dslType": "park", "city": "TrafficTwin demo", "name": "Mestni park", "surface": "grass", "geometrySource": "PolygonGeometry"}
+    },
+    {
+      "type": "Feature",
+      "geometry": {"type": "Polygon", "coordinates": [[[16.15, 46.659], [16.154, 46.659], [16.154, 46.6615], [16.15, 46.6615], [16.15, 46.659]]]},
+      "properties": {"dslType": "zone", "city": "TrafficTwin demo", "name": "Cona umirjenega prometa", "speed": 30, "geometrySource": "PolygonGeometry"}
+    },
+    {
+      "type": "Feature",
+      "geometry": {"type": "Point", "coordinates": [16.161, 46.6625]},
+      "properties": {"dslType": "parking", "city": "TrafficTwin demo", "name": "Center P1", "id": 1001, "capacity": 60, "occupied": 44, "payment": "paid", "status": "open"}
+    },
+    {
+      "type": "Feature",
+      "geometry": {"type": "Point", "coordinates": [16.165, 46.664]},
+      "properties": {"dslType": "parking", "city": "TrafficTwin demo", "name": "Center P2", "id": 1002, "capacity": 40, "occupied": 40, "payment": "mixed", "status": "full"}
+    },
+    {
+      "type": "Feature",
+      "geometry": {"type": "Point", "coordinates": [16.156, 46.6605]},
+      "properties": {"dslType": "parking", "city": "TrafficTwin demo", "name": "Makadamsko parkirisce", "id": 1003, "capacity": 25, "occupied": 5, "payment": "unknown", "status": "unknown"}
+    },
+    {
+      "type": "Feature",
+      "geometry": {"type": "Point", "coordinates": [16.164, 46.663]},
+      "properties": {"dslType": "junction", "city": "TrafficTwin demo", "name": "Krizisce pri parku"}
+    },
+    {
+      "type": "Feature",
+      "geometry": {"type": "Point", "coordinates": [16.16, 46.662]},
+      "properties": {"dslType": "sensor", "city": "TrafficTwin demo", "name": "Stevec prometa 1", "kind": "traffic-counter", "active": true}
+    }
+  ]
+}
