@@ -571,3 +571,89 @@ button.favourite.active {
     border-color: #3b82f6; /* Lepa modra barva fokusa */
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
 }
+
+/* Stili za napredno iskanje v polmeru */
+.radius-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #f1f5f9;
+    padding: 6px 12px;
+    border-radius: 12px;
+    font-size: 13px;
+}
+
+.radius-controls input[type="range"] {
+    cursor: pointer;
+    margin-left: 6px;
+}
+
+.info-text {
+    font-size: 11px;
+    color: #64748b;
+}
+
+.toggle-btn {
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+/* Spodnji interaktivni seznam parkirišč */
+.parking-list-section {
+    margin-top: 10px;
+    border-top: 1px solid #e2e8f0;
+    padding-top: 16px;
+}
+
+.parking-list-section h3 {
+    margin: 0 0 12px 0;
+    font-size: 18px;
+    color: #172033;
+}
+
+.parking-horizontal-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 12px;
+    max-height: 250px;
+    overflow-y: auto;
+    padding: 4px;
+}
+
+.parking-mini-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 14px;
+    cursor: pointer;
+    transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+}
+
+.parking-mini-card:hover {
+    transform: translateY(-2px);
+    border-color: #2563eb;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.1);
+}
+
+.card-header-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.card-header-info h4 {
+    margin: 0;
+    font-size: 15px;
+    color: #111827;
+}
+
+.payment-badge {
+    font-size: 11px;
+    background: #f1f5f9;
+    padding: 2px 6px;
+    border-radius: 6px;
+    color: #475569;
+    white-space: nowrap;
+}
