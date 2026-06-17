@@ -27,3 +27,20 @@ export function removeFavouriteRoad(roadId) {
         method: "DELETE"
     });
 }
+
+export function getAllUsers() {
+    return apiRequest("/api/users");
+}
+
+export function updateUserRole(email, role) {
+    return apiRequest(`/api/users/${encodeURIComponent(email)}/role`, {
+        method: "PATCH",
+        body: JSON.stringify({ role })
+    });
+}
+
+export function deleteUser(email) {
+    return apiRequest(`/api/users/${encodeURIComponent(email)}`, {
+        method: "DELETE"
+    });
+}
