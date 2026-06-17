@@ -3,7 +3,10 @@ import EmptyState from "../components/common/EmptyState.jsx";
 import {
     getCurrentUserProfile,
     removeFavouriteParking,
-    removeFavouriteRoad
+    removeFavouriteRoad,
+    getAllUsers,
+    updateUserRole,
+    deleteUser
 } from "../services/userApi.js";
 
 function formatRole(role) {
@@ -26,10 +29,7 @@ function FavouriteParkingCard({ parking, onRemove }) {
             </div>
 
             <div className="card-actions">
-                <button
-                    className="danger"
-                    onClick={() => onRemove(parking.id)}
-                >
+                <button className="danger" onClick={() => onRemove(parking.id)}>
                     Odstrani
                 </button>
             </div>
@@ -46,17 +46,12 @@ function FavouriteRoadCard({ road, onRemove }) {
                 <p>Stanje: {road.stanje}</p>
 
                 {road.latitude != null && road.longitude != null && (
-                    <p>
-                        Koordinate: {road.latitude}, {road.longitude}
-                    </p>
+                    <p>Koordinate: {road.latitude}, {road.longitude}</p>
                 )}
             </div>
 
             <div className="card-actions">
-                <button
-                    className="danger"
-                    onClick={() => onRemove(road.id)}
-                >
+                <button className="danger" onClick={() => onRemove(road.id)}>
                     Odstrani
                 </button>
             </div>
@@ -68,12 +63,13 @@ export default function UserPage() {
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
+    const [users, setUsers] = useState([]);
+    const [usersError, setUsersError] = useState("");
 
     async function loadProfile() {
         try {
             setLoading(true);
             setError("");
-
             const data = await getCurrentUserProfile();
             setProfile(data);
         } catch (err) {
@@ -83,9 +79,14 @@ export default function UserPage() {
         }
     }
 
-    useEffect(() => {
-        loadProfile();
-    }, []);
+    async function loadUsers() {
+        try {
+            const data = await getAllUsers();
+            setUsers(data);
+        } catch (err) {
+            setUsersError(err.message);
+        }
+    }
 
     async function handleRemoveParking(parkingId) {
         try {
@@ -106,6 +107,35 @@ export default function UserPage() {
             setError(err.message);
         }
     }
+
+    async function handleRoleChange(email, newRole) {
+        try {
+            setUsersError("");
+            await updateUserRole(email, newRole);
+            await loadUsers();
+        } catch (err) {
+            setUsersError(err.message);
+        }
+    }
+
+    async function handleDeleteUser(email) {
+        if (!confirm(`Res želiš izbrisati ${email}?`)) return;
+        try {
+            setUsersError("");
+            await deleteUser(email);
+            await loadUsers();
+        } catch (err) {
+            setUsersError(err.message);
+        }
+    }
+
+    useEffect(() => {
+        loadProfile();
+    }, []);
+
+    useEffect(() => {
+        if (profile?.role === "admin") loadUsers();
+    }, [profile]);
 
     return (
         <section className="page">
@@ -179,6 +209,52 @@ export default function UserPage() {
                             />
                         )}
                     </div>
+
+                    {profile.role === "admin" && (
+                        <div className="profile-section">
+                            <h3>Upravljanje uporabnikov</h3>
+
+                            {usersError && <div className="error-box">{usersError}</div>}
+
+                            {users.length === 0 ? (
+                                <EmptyState
+                                    title="Ni uporabnikov"
+                                    description="V bazi ni registriranih uporabnikov."
+                                />
+                            ) : (
+                                <div className="list">
+                                    {users.map(user => (
+                                        <article className="list-card" key={user.email}>
+                                            <div>
+                                                <h3>{user.name}</h3>
+                                                <p>E-pošta: {user.email}</p>
+                                                <p>Vloga: {formatRole(user.role)}</p>
+                                            </div>
+
+                                            <div className="card-actions">
+                                                <select
+                                                    className="custom-select"
+                                                    value={user.role}
+                                                    onChange={e => handleRoleChange(user.email, e.target.value)}
+                                                >
+                                                    <option value="user">Uporabnik</option>
+                                                    <option value="admin">Administrator</option>
+                                                </select>
+                                                
+
+                                                <button
+                                                    className="danger"
+                                                    onClick={() => handleDeleteUser(user.email)}
+                                                >
+                                                    Izbriši
+                                                </button>
+                                            </div>
+                                        </article>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </>
             )}
         </section>

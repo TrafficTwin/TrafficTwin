@@ -660,3 +660,58 @@ async function startServer() {
 }
 
 startServer();
+// -------------------- UPRAVLJANJE USERJEV (ADMIN) --------------------
+
+app.get('/api/users', requireAuth, requireAdmin, async (req, res) => {
+    try {
+        const users = await userCol().find(
+            {},
+            { projection: { _id: 0, password: 0 } }
+        ).toArray();
+        res.json(users);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.patch('/api/users/:email/role', requireAuth, requireAdmin, async (req, res) => {
+    try {
+        const email = decodeURIComponent(req.params.email).toLowerCase();
+        const { role } = req.body ?? {};
+
+        if (!["user", "admin"].includes(role)) {
+            return res.status(400).json({ error: "Vloga mora biti 'user' ali 'admin'." });
+        }
+
+        const result = await userCol().updateOne({ email }, { $set: { role } });
+
+        if (result.matchedCount === 0) {
+            return res.status(404).json({ error: "Uporabnik ne obstaja." });
+        }
+
+        res.json({ message: "Vloga posodobljena." });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.delete('/api/users/:email', requireAuth, requireAdmin, async (req, res) => {
+    try {
+        const email = decodeURIComponent(req.params.email).toLowerCase();
+        const currentEmail = getCurrentUserEmail(req);
+
+        if (email === currentEmail) {
+            return res.status(400).json({ error: "Ne moreš izbrisati svojega računa." });
+        }
+
+        const result = await userCol().deleteOne({ email });
+
+        if (result.deletedCount === 0) {
+            return res.status(404).json({ error: "Uporabnik ne obstaja." });
+        }
+
+        res.json({ message: "Uporabnik izbrisan." });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});

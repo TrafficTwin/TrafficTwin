@@ -12,11 +12,14 @@ object StanjeApi {
     private val gson = Gson()
     private val JSON = "application/json; charset=utf-8".toMediaType()
 
+    private fun Request.Builder.withAuth() =
+        addHeader("Authorization", "Bearer ${ApiConfig.jwtToken}")
+
     fun getAll(): List<StanjeCeste> {
         val req = Request.Builder()
             .url("${ApiConfig.baseUrl}/api/stanje-cest")
             .get()
-            .addHeader("Authorization", "Bearer ${ApiConfig.scraperToken}")
+            .withAuth()
             .build()
 
         client.newCall(req).execute().use { response ->
@@ -35,7 +38,7 @@ object StanjeApi {
         val req = Request.Builder()
             .url("${ApiConfig.baseUrl}/api/stanje-cest/sync")
             .post(body)
-            .addHeader("Authorization", "Bearer ${ApiConfig.scraperToken}")
+            .withAuth()
             .build()
 
         client.newCall(req).execute().use { response ->
@@ -51,7 +54,7 @@ object StanjeApi {
         val req = Request.Builder()
             .url("${ApiConfig.baseUrl}/api/stanje-cest")
             .delete()
-            .addHeader("Authorization", "Bearer ${ApiConfig.scraperToken}")
+            .withAuth()
             .build()
 
         client.newCall(req).execute().use { response ->
