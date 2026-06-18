@@ -5,6 +5,7 @@ const http = require('http');
 const WebSocket = require('ws');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const { NAP_CONTENTS, importNapRoadContents } = require('./napB2B');
 require('dotenv').config();
 
 const app = express();
@@ -83,7 +84,7 @@ function slugify(value) {
 }
 
 function createRoadId(item, index = 0) {
-    const slug = slugify(`${item.tip ?? ""}-${item.relacija ?? ""}`);
+    const slug = slugify(`${item.tip ?? item.recordType ?? ""}-${item.relacija ?? item.title ?? ""}-${item.sourceKey ?? "manual"}`);
     return slug ? `road-${slug}` : `road-${index}`;
 }
 
@@ -92,20 +93,16 @@ function normalizePoint(point) {
         const latitude = toNumber(point[0]);
         const longitude = toNumber(point[1]);
 
-        if (hasValidCoordinates(latitude, longitude)) {
-            return [latitude, longitude];
-        }
-
+        if (hasValidCoordinates(latitude, longitude)) return [latitude, longitude];
         return null;
     }
 
-    const latitude = toNumber(point.latitude);
-    const longitude = toNumber(point.longitude);
+    if (!point || typeof point !== 'object') return null;
 
-    if (hasValidCoordinates(latitude, longitude)) {
-        return [latitude, longitude];
-    }
+    const latitude = toNumber(point.latitude ?? point.lat);
+    const longitude = toNumber(point.longitude ?? point.lon ?? point.lng);
 
+    if (hasValidCoordinates(latitude, longitude)) return [latitude, longitude];
     return null;
 }
 
@@ -116,9 +113,7 @@ function normalizeRoadCoordinates(item) {
             ? item.polyline
             : [];
 
-    return rawCoordinates
-        .map(normalizePoint)
-        .filter(Boolean);
+    return rawCoordinates.map(normalizePoint).filter(Boolean);
 }
 
 function normalizeRoadDoc(item, index = 0) {
@@ -128,62 +123,25 @@ function normalizeRoadDoc(item, index = 0) {
 
     return {
         id: item.id ?? createRoadId(item, index),
-        tip: item.tip ?? "",
-        relacija: item.relacija ?? "",
-        stanje: item.stanje ?? "",
+        tip: item.tip ?? item.recordType ?? item.sourceName ?? "",
+        relacija: item.relacija ?? item.title ?? "",
+        stanje: item.stanje ?? item.description ?? "",
+        title: item.title ?? item.relacija ?? "",
+        description: item.description ?? item.stanje ?? "",
+        sourceKey: item.sourceKey ?? "manual",
+        sourceName: item.sourceName ?? "Ročni vnos",
+        napCode: item.napCode ?? "",
+        language: item.language ?? "",
+        format: item.format ?? "",
+        category: item.category ?? "",
+        recordType: item.recordType ?? item.tip ?? "",
+        startTime: item.startTime ?? null,
+        endTime: item.endTime ?? null,
         latitude: hasPoint ? latitude : null,
         longitude: hasPoint ? longitude : null,
         coordinates: normalizeRoadCoordinates(item),
-        lastUpdated: new Date()
-    };
-}
-
-function normalizePoint(point) {
-    if (Array.isArray(point)) {
-        const latitude = toNumber(point[0]);
-        const longitude = toNumber(point[1]);
-
-        if (hasValidCoordinates(latitude, longitude)) {
-            return [latitude, longitude];
-        }
-
-        return null;
-    }
-
-    const latitude = toNumber(point.latitude);
-    const longitude = toNumber(point.longitude);
-
-    if (hasValidCoordinates(latitude, longitude)) {
-        return [latitude, longitude];
-    }
-
-    return null;
-}
-
-function normalizeRoadCoordinates(item) {
-    const rawCoordinates = Array.isArray(item.coordinates)
-        ? item.coordinates
-        : Array.isArray(item.polyline)
-            ? item.polyline
-            : [];
-
-    return rawCoordinates
-        .map(normalizePoint)
-        .filter(Boolean);
-}
-
-function normalizeRoadDoc(item) {
-    const latitude = toNumber(item.latitude);
-    const longitude = toNumber(item.longitude);
-    const hasPoint = hasValidCoordinates(latitude, longitude);
-
-    return {
-        tip: item.tip ?? "",
-        relacija: item.relacija ?? "",
-        stanje: item.stanje ?? "",
-        latitude: hasPoint ? latitude : null,
-        longitude: hasPoint ? longitude : null,
-        coordinates: normalizeRoadCoordinates(item),
+        geometryType: item.geometryType ?? null,
+        importedAt: item.importedAt ? new Date(item.importedAt) : null,
         lastUpdated: new Date()
     };
 }
@@ -600,6 +558,39 @@ app.delete('/api/parking',       requireAuth, requireAdmin, async (req, res) => 
 
 // -------------------- STANJE CEST --------------------
 
+app.get('/api/stanje-cest/nap/sources', requireAuth, async (req, res) => {
+    res.json(NAP_CONTENTS);
+});
+
+app.post('/api/stanje-cest/nap/import', requireAuth, requireAdmin, async (req, res) => {
+    try {
+        const result = await importNapRoadContents();
+
+        if (result.count === 0 && result.errors.length > 0) {
+            return res.status(502).json({
+                error: "NAP uvoz ni uspel. Noben vir ni vrnil uporabnih podatkov.",
+                errors: result.errors
+            });
+        }
+
+        await roadCol().deleteMany({});
+        if (result.items.length > 0) await roadCol().insertMany(result.items);
+
+        await broadcastTrafficEvent("traffic:nap-imported", {
+            count: result.items.length,
+            sources: result.sources,
+            errors: result.errors
+        });
+
+        res.json({
+            message: `Uvoženih je ${result.items.length} zapisov iz NAP B2B.`,
+            ...result
+        });
+    } catch (err) {
+        res.status(500).json({ error: "Napaka pri NAP uvozu: " + err.message });
+    }
+});
+
 app.get('/api/stanje-cest',           requireAuth,              async (req, res) => {
     try { res.json(await getRoadSnapshot()); }
     catch (err) { res.status(500).json({ error: err.message }); }
@@ -644,7 +635,9 @@ async function startServer() {
         await client.connect();
         db = client.db('traffic_twin');
         await col().createIndex({ locationGeo: '2dsphere' });
-        await roadCol().createIndex({ id: 1 });
+        await roadCol().createIndex({ id: 1 }, { unique: true });
+        await roadCol().createIndex({ sourceKey: 1 });
+        await roadCol().createIndex({ lastUpdated: -1 });
         await userCol().createIndex({ email: 1 }, { unique: true });
         console.log("Uspešno povezan z MongoDB.");
 

@@ -1,13 +1,34 @@
 package si.um.feri
-
 import com.microsoft.playwright.*
 
 data class StanjeCeste(
-    val tip: String,
-    val relacija: String,
-    val stanje: String,
+    val id: String? = null,
+    val tip: String = "",
+    val relacija: String = "",
+    val stanje: String = "",
+    val title: String? = null,
+    val description: String? = null,
+    val sourceKey: String? = null,
+    val sourceName: String? = null,
+    val napCode: String? = null,
+    val language: String? = null,
+    val format: String? = null,
+    val category: String? = null,
+    val recordType: String? = null,
+    val startTime: String? = null,
+    val endTime: String? = null,
+    val latitude: Double? = null,
+    val longitude: Double? = null,
+    val coordinates: List<List<Double>> = emptyList(),
+    val geometryType: String? = null,
+    val importedAt: String? = null,
+    val lastUpdated: String? = null
 )
 
+fun parserStanjeList(): List<StanjeCeste> {
+    return StanjeApi.importFromNap()
+}
+/*
 fun parserStanjeList(): List<StanjeCeste> {
     Playwright.create().use { playwright ->
         val browser = playwright.chromium().launch()
@@ -41,4 +62,4 @@ fun parserStanjeList(): List<StanjeCeste> {
         browser.close()
         return roadList
     }
-}
+}*/
