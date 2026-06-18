@@ -4,6 +4,16 @@ export function getRoadStates() {
     return apiRequest("/api/stanje-cest");
 }
 
+export function getNapRoadSources() {
+    return apiRequest("/api/stanje-cest/nap/sources");
+}
+
+export function importNapRoadStates() {
+    return apiRequest("/api/stanje-cest/nap/import", {
+        method: "POST"
+    });
+}
+
 export function syncRoadStates(roads) {
     return apiRequest("/api/stanje-cest/sync", {
         method: "POST",
@@ -17,9 +27,8 @@ export function clearRoadStates() {
     });
 }
 
-
 export function updateRoadState(id, road) {
-    return apiRequest(`/api/stanje-cest/${id}`, {
+    return apiRequest(`/api/stanje-cest/${encodeURIComponent(id)}`, {
         method: "PUT",
         body: JSON.stringify(road)
     });

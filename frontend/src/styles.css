@@ -657,3 +657,58 @@ button.favourite.active {
     color: #475569;
     white-space: nowrap;
 }
+
+.road-card-header {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.road-source-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: #dbeafe;
+    color: #1e40af;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.road-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.road-meta span {
+    background: #f1f5f9;
+    color: #475569;
+    border-radius: 999px;
+    padding: 4px 8px;
+    font-size: 12px;
+}
+
+.road-source-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    background: white;
+    border-radius: 18px;
+    padding: 14px 16px;
+    box-shadow: 0 12px 35px rgba(15, 23, 42, 0.08);
+}
+
+.road-source-summary span {
+    background: #eef2ff;
+    color: #3730a3;
+    border-radius: 999px;
+    padding: 5px 10px;
+    font-size: 13px;
+}
+
+.legend-purple {
+    background: #7c3aed;
+}
