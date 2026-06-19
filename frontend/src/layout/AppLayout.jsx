@@ -10,8 +10,8 @@ export default function AppLayout() {
     const navLinks = [
         { to: "/", label: "Pregled" },
         { to: "/parking", label: "Parkirišča" },
-        { to: "/stanje-cest", label: "Stanje cest" },
-        { to: "/zemljevid", label: "Zemljevid" },
+        { to: "/road-status", label: "Stanje cest" },
+        { to: "/map", label: "Zemljevid" },
     ];
 
     const linkStyle = (isActive) => ({

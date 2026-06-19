@@ -36,8 +36,6 @@ export async function apiRequest(path, options = {}) {
         try {
             data = JSON.parse(text);
         } catch {
-            // Strežnik je vrnil neveljaven JSON (npr. HTML error stran) -
-            // ne podremo se na JSON.parse, samo data ostane null.
             data = null;
         }
     }

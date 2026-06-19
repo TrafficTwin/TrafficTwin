@@ -16,8 +16,6 @@ export function removeFavouriteParking(parkingId) {
     });
 }
 
-
-
 export function removeFavouriteRoad(roadId) {
     return apiRequest(`/api/users/me/favourites/road/${encodeURIComponent(roadId)}`, {
         method: "DELETE"
@@ -42,7 +40,6 @@ export function deleteUser(email) {
 }
 
 export function addFavouriteRoad(roadId) {
-    // Mora biti točno to:
     return apiRequest(`/api/users/me/favourites/road/${encodeURIComponent(roadId)}`, {
         method: "POST"
     });

@@ -44,7 +44,7 @@ fun App() {
         var selectedPage by remember { mutableStateOf(0) }
 
         // Podatki za stanje cest
-        var roadStates by remember { mutableStateOf(listOf<StanjeCeste>()) }
+        var roadStates by remember { mutableStateOf(listOf<StatusOfRoad>()) }
         var editingRoadIndex by remember { mutableStateOf<Int?>(null) }
 
         //GeoJSON
@@ -453,13 +453,15 @@ fun App() {
                             }
                         }
                     } else {
-                        StanjeCestScreen(
+                        RoadStatusScreen(
                             roadStates = roadStates,
                             windowSize = windowSize,
                             onRefresh = {
                                 scope.launch {
+                                    // Tukaj StanjeApi.getAll() vrne List<StanjeCeste>
                                     val result = withContext(Dispatchers.IO) {
-                                        runCatching { StanjeApi.getAll() }.getOrElse { emptyList() }
+                                        runCatching { RoadsStateApi.getAll() }
+                                            .getOrElse { emptyList() }
                                     }
                                     roadStates = result
                                 }
@@ -467,21 +469,21 @@ fun App() {
                             onImport = {
                                 scope.launch {
                                     val result = withContext(Dispatchers.IO) {
-                                        runCatching { parserStanjeList() }.getOrElse { emptyList() }
+                                        runCatching { parserStatusRoadList() }.getOrElse { emptyList() }
                                     }
                                     roadStates = result
                                 }
                             },
                             onGenerate = {
-                                val generated = generateFakeStanjeCest(10)
+                                val generated = generateFakeStatesOfRoads(10)
                                 roadStates = roadStates + generated
                             },
                             onSave = {
                                 scope.launch {
                                     val result = withContext(Dispatchers.IO) {
                                         runCatching {
-                                            StanjeApi.sync(roadStates)
-                                            StanjeApi.getAll()
+                                            RoadsStateApi.sync(roadStates)
+                                            RoadsStateApi.getAll()
                                         }.getOrElse { roadStates }
                                     }
                                     roadStates = result
@@ -596,9 +598,9 @@ fun App() {
             editingRoadIndex?.let { index ->
                 val road = roadStates.getOrNull(index)
                 if (road != null) {
-                    var editTip by remember(index) { mutableStateOf(road.tip) }
-                    var editRelacija by remember(index) { mutableStateOf(road.relacija) }
-                    var editStanje by remember(index) { mutableStateOf(road.stanje) }
+                    var editType by remember(index) { mutableStateOf(road.type) }
+                    var editRelation by remember(index) { mutableStateOf(road.relation) }
+                    var editStatus by remember(index) { mutableStateOf(road.status) }
 
                     AlertDialog(
                         onDismissRequest = { editingRoadIndex = null },
@@ -609,15 +611,15 @@ fun App() {
                                 modifier = Modifier.fillMaxWidth(),
                                 verticalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
-                                OutlinedTextField(value = editTip, onValueChange = { editTip = it }, label = { Text("Tip ceste") }, modifier = Modifier.fillMaxWidth())
-                                OutlinedTextField(value = editRelacija, onValueChange = { editRelacija = it }, label = { Text("Lokacija / relacija") }, modifier = Modifier.fillMaxWidth())
-                                OutlinedTextField(value = editStanje, onValueChange = { editStanje = it }, label = { Text("Stanje ceste") }, modifier = Modifier.fillMaxWidth())
+                                OutlinedTextField(value = editType, onValueChange = { editType = it }, label = { Text("Tip ceste") }, modifier = Modifier.fillMaxWidth())
+                                OutlinedTextField(value = editRelation, onValueChange = { editRelation = it }, label = { Text("Lokacija / relacija") }, modifier = Modifier.fillMaxWidth())
+                                OutlinedTextField(value = editStatus, onValueChange = { editStatus = it }, label = { Text("Stanje ceste") }, modifier = Modifier.fillMaxWidth())
                             }
                         },
                         confirmButton = {
                             Button(
                                 onClick = {
-                                    val updated = StanjeCeste(tip = editTip, relacija = editRelacija, stanje = editStanje)
+                                    val updated = StatusOfRoad(type = editType, relation = editRelation, status = editStatus)
                                     roadStates = roadStates.mapIndexed { i, item -> if (i == index) updated else item }
                                     editingRoadIndex = null
                                 }
@@ -634,8 +636,8 @@ fun App() {
 }
 
 @Composable
-fun StanjeCestScreen(
-    roadStates: List<StanjeCeste>,
+fun RoadStatusScreen(
+    roadStates: List<StatusOfRoad>,
     windowSize: Boolean, // Sprejme stanje velikosti okna
     onRefresh: () -> Unit,
     onImport: () -> Unit,
@@ -650,12 +652,12 @@ fun StanjeCestScreen(
 
     val filteredRoads = roadStates
         .withIndex()
-        .filter { it.value.relacija.contains(searchRoadQuery, ignoreCase = true) }
+        .filter { it.value.relation.contains(searchRoadQuery, ignoreCase = true) }
         .let { list ->
             when (sortMode) {
-                "LOCATION" -> list.sortedBy { it.value.relacija.lowercase() }
-                "STATE" -> list.sortedBy { it.value.stanje.lowercase() }
-                "TYPE" -> list.sortedBy { it.value.tip.lowercase() }
+                "LOCATION" -> list.sortedBy { it.value.relation.lowercase() }
+                "STATE" -> list.sortedBy { it.value.status.lowercase() }
+                "TYPE" -> list.sortedBy { it.value.type.lowercase() }
                 else -> list
             }
         }
@@ -755,9 +757,9 @@ fun StanjeCestScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
-                                Text(text = road.relacija, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyLarge)
-                                Text(text = "Tip: ${road.tip}", style = MaterialTheme.typography.bodyMedium)
-                                Text(text = "Stanje: ${road.stanje}", style = MaterialTheme.typography.bodyMedium)
+                                Text(text = road.relation, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyLarge)
+                                Text(text = "Tip: ${road.type}", style = MaterialTheme.typography.bodyMedium)
+                                Text(text = "Stanje: ${road.status}", style = MaterialTheme.typography.bodyMedium)
                             }
 
                             IconButton(onClick = { onEdit(index) }) {
@@ -795,19 +797,19 @@ fun generateAdvancedFake(count: Int, min: Int, max: Int): List<ParkingDto> {
     }
 }
 
-fun generateFakeStanjeCest(count: Int): List<StanjeCeste> {
+fun generateFakeStatesOfRoads(count: Int): List<StatusOfRoad> {
     val faker = Faker()
-    val tipiCest = listOf("AC", "HC", "G1", "G2", "R1", "R2", "LC")
-    val stanja = listOf("Normalen promet", "Zastoj", "Dela na cesti", "Zapora ceste", "Omejen promet", "Prometna nesreča", "Povečana gostota prometa", "Spolzko vozišče", "Megla", "Sneg na cesti")
+    val roadTypes = listOf("AC", "HC", "G1", "G2", "R1", "R2", "LC")
+    val states = listOf("Normalen promet", "Zastoj", "Dela na cesti", "Zapora ceste", "Omejen promet", "Prometna nesreča", "Povečana gostota prometa", "Spolzko vozišče", "Megla", "Sneg na cesti")
     val safeCount = count.coerceAtLeast(0)
 
     return List(safeCount) {
         val kraj1 = faker.address.city()
         val kraj2 = faker.address.city()
-        StanjeCeste(
-            tip = tipiCest.random(),
-            relacija = "$kraj1 - $kraj2",
-            stanje = stanja.random()
+        StatusOfRoad(
+            type = roadTypes.random(),
+            relation = "$kraj1 - $kraj2",
+            status = states.random()
         )
     }
 }
