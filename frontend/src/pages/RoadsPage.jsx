@@ -157,12 +157,6 @@ export default function RoadsPage() {
 
     return (
         <section className="page">
-            <div className="page-header">
-                <div>
-                    <p className="eyebrow">Stanje cest</p>
-                    <h2>Pregled stanj cest</h2>
-                </div>
-            </div>
 
             <RoadToolbar
                 search={search}
