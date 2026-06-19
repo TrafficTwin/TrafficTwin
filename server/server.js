@@ -558,6 +558,43 @@ app.delete('/api/parking',       requireAuth, requireAdmin, async (req, res) => 
 
 // -------------------- STANJE CEST --------------------
 
+app.delete('/api/stanje-cest/:id', requireAuth, requireAdmin, async (req, res) => {
+    try {
+        const id = String(req.params.id);
+        const result = await roadCol().findOneAndDelete({ id }, { projection: { _id: 0 } });
+        
+        if (!result) {
+            return res.status(404).json({ error: "Cesta z tem ID-jem ne obstaja." });
+        }
+        
+        await broadcastTrafficEvent("traffic:deleted", { id });
+        res.json({ message: "Uspešno izbrisano." });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/stanje-cest', requireAuth, requireAdmin, async (req, res) => {
+    try {
+        // Uporabimo tvojo obstoječo funkcijo za normalizacijo podatkov
+        const doc = normalizeRoadDoc(req.body);
+        
+        // Vstavimo v bazo
+        await roadCol().insertOne(doc);
+        
+        // Obvestimo vse WebSocket kliente, da se je zgodilo nekaj novega
+        await broadcastTrafficEvent("traffic:created", { road: doc });
+        
+        res.status(201).json(doc);
+    } catch (err) {
+        if (err.code === 11000) {
+            res.status(409).json({ error: "Cesta s tem ID-jem že obstaja." });
+        } else {
+            res.status(500).json({ error: err.message });
+        }
+    }
+});
+
 app.get('/api/stanje-cest/nap/sources', requireAuth, async (req, res) => {
     res.json(NAP_CONTENTS);
 });

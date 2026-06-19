@@ -5,9 +5,10 @@ import RoadFormDialog from "../components/roads/RoadFormDialog.jsx";
 import RoadToolbar from "../components/roads/RoadToolbar.jsx";
 import {
     clearRoadStates,
+    deleteRoadState,
     getRoadStates,
-    syncRoadStates,
-    updateRoadState
+    updateRoadState,
+    createRoadState 
 } from "../services/roadsApi.js";
 import {
     addFavouriteRoad,
@@ -24,16 +25,7 @@ export default function RoadsPage() {
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
     const [favouriteRoadIds, setFavouriteRoadIds] = useState([]);
-
-    function createRoadClientId(road) {
-        const slug = String(`${road.tip ?? ""}-${road.relacija ?? ""}`)
-            .normalize("NFD")
-            .replace(/[\u0300-\u036f]/g, "")
-            .toLowerCase()
-            .replace(/[^a-z0-9]+/g, "-")
-            .replace(/^-+|-+$/g, "");
-        return slug ? `road-${slug}` : `road-${Date.now()}`;
-    }
+const [modifiedRoads, setModifiedRoads] = useState(new Set());
 
     async function loadFavourites() {
         try {
@@ -83,45 +75,71 @@ export default function RoadsPage() {
         setIsDialogOpen(true);
     }
 
-    async function handleSave(road) {
-        const roadWithId = {
-            ...road,
-            id: road.id ?? createRoadClientId(road)
-        };
-        try {
-            setError("");
-            if (editingRoad != null && roadWithId.id) {
-                await updateRoadState(roadWithId.id, roadWithId);
-            }
-            setRoadStates((current) => {
-                if (editingRoad == null) {
-                    return [...current, roadWithId];
-                } else {
-                    return current.map((item) => (item === editingRoad ? roadWithId : item));
-                }
-            });
-            setIsDialogOpen(false);
-            setEditingRoad(null);
-        } catch (err) {
-            setError(err.message);
-        }
-    }
 
-    function handleDelete(roadToDelete) {
+async function handleSave(road) {
+    try {
+        setError("");
+
+        if (editingRoad == null) {
+            // TUKAJ KLICEMO NOVO FUNKCIJO ZA USTVARJANJE
+            const newRoad = await createRoadState(road);
+            setRoadStates((current) => [...current, newRoad]);
+        } else {
+            // UREJANJE obstoječe
+            const updatedRoad = await updateRoadState(editingRoad.id, road);
+            setRoadStates((current) => 
+                current.map((item) => (item.id === editingRoad.id ? updatedRoad : item))
+            );
+        }
+
+        setIsDialogOpen(false);
+        setEditingRoad(null);
+    } catch (err) {
+        setError("Napaka pri shranjevanju: " + err.message);
+    }
+}
+
+// Popravi handleSync, da pošlje le spremenjene ceste
+async function handleSync() {
+    try {
+        setError("");
+        // Poišči ceste, ki so v modifiedRoads setu
+        const roadsToSync = roadStates.filter(r => modifiedRoads.has(r.id));
+        
+        if (roadsToSync.length === 0) {
+            alert("Ni novih sprememb za sinhronizacijo.");
+            return;
+        }
+
+        // Sinhroniziraj samo tiste ceste, ki so se spremenile
+        // Če tvoj backend ne podpira arraya v sync, uporabi zanko
+        for (const road of roadsToSync) {
+            await updateRoadState(road.id, road);
+        }
+        
+        setModifiedRoads(new Set()); // Počisti seznam sprememb
+        await loadRoadStates();
+        alert("Spremembe uspešno sinhronizirane!");
+    } catch (err) {
+        setError("Napaka pri sinhronizaciji: " + err.message);
+    }
+}
+
+    async function handleDelete(roadToDelete) {
         const confirmed = window.confirm("Res želiš izbrisati stanje ceste?");
         if (!confirmed) return;
-        setRoadStates((current) => current.filter((r) => r !== roadToDelete));
-    }
-
-    async function handleSync() {
         try {
             setError("");
-            await syncRoadStates(roadStates);
-            await loadRoadStates();
+            if (roadToDelete.id) {
+                await deleteRoadState(roadToDelete.id);
+            }
+            setRoadStates((current) => current.filter((r) => r !== roadToDelete));
         } catch (err) {
-            setError(err.message);
+            setError("Napaka pri brisanju: " + err.message);
         }
     }
+
+    
 
     async function handleClear() {
         const confirmed = window.confirm("Res želiš izbrisati vsa stanja cest?");

@@ -16,11 +16,7 @@ export function removeFavouriteParking(parkingId) {
     });
 }
 
-export function addFavouriteRoad(roadId) {
-    return apiRequest(`/api/users/me/favourites/road/${encodeURIComponent(roadId)}`, {
-        method: "POST"
-    });
-}
+
 
 export function removeFavouriteRoad(roadId) {
     return apiRequest(`/api/users/me/favourites/road/${encodeURIComponent(roadId)}`, {
@@ -42,5 +38,12 @@ export function updateUserRole(email, role) {
 export function deleteUser(email) {
     return apiRequest(`/api/users/${encodeURIComponent(email)}`, {
         method: "DELETE"
+    });
+}
+
+export function addFavouriteRoad(roadId) {
+    // Mora biti točno to:
+    return apiRequest(`/api/users/me/favourites/road/${encodeURIComponent(roadId)}`, {
+        method: "POST"
     });
 }

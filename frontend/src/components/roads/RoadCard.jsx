@@ -20,7 +20,7 @@ export default function RoadCard({
         ? road.description
         : "";
 
-        console.log("Road ID:", road.id);
+        //console.log("Road ID:", road.id);
 
     return (
         <article className="list-card road-card">
