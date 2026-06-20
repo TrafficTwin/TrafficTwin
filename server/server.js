@@ -558,11 +558,48 @@ app.delete('/api/parking',       requireAuth, requireAdmin, async (req, res) => 
 
 // -------------------- STANJE CEST --------------------
 
-app.get('/api/stanje-cest/nap/sources', requireAuth, async (req, res) => {
+app.delete('/api/road-status/:id', requireAuth, requireAdmin, async (req, res) => {
+    try {
+        const id = String(req.params.id);
+        const result = await roadCol().findOneAndDelete({ id }, { projection: { _id: 0 } });
+
+        if (!result) {
+            return res.status(404).json({ error: "Cesta z tem ID-jem ne obstaja." });
+        }
+
+        await broadcastTrafficEvent("traffic:deleted", { id });
+        res.json({ message: "Uspešno izbrisano." });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/road-status', requireAuth, requireAdmin, async (req, res) => {
+    try {
+        // Uporabimo tvojo obstoječo funkcijo za normalizacijo podatkov
+        const doc = normalizeRoadDoc(req.body);
+
+        // Vstavimo v bazo
+        await roadCol().insertOne(doc);
+
+        // Obvestimo vse WebSocket kliente, da se je zgodilo nekaj novega
+        await broadcastTrafficEvent("traffic:created", { road: doc });
+
+        res.status(201).json(doc);
+    } catch (err) {
+        if (err.code === 11000) {
+            res.status(409).json({ error: "Cesta s tem ID-jem že obstaja." });
+        } else {
+            res.status(500).json({ error: err.message });
+        }
+    }
+});
+
+app.get('/api/road-status/nap/sources', requireAuth, async (req, res) => {
     res.json(NAP_CONTENTS);
 });
 
-app.post('/api/stanje-cest/nap/import', requireAuth, requireAdmin, async (req, res) => {
+app.post('/api/road-status/nap/import', requireAuth, requireAdmin, async (req, res) => {
     try {
         const result = await importNapRoadContents();
 
@@ -591,12 +628,12 @@ app.post('/api/stanje-cest/nap/import', requireAuth, requireAdmin, async (req, r
     }
 });
 
-app.get('/api/stanje-cest',           requireAuth,              async (req, res) => {
+app.get('/api/road-status',           requireAuth,              async (req, res) => {
     try { res.json(await getRoadSnapshot()); }
     catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-app.post('/api/stanje-cest/sync',     requireAuth, requireAdmin, async (req, res) => {
+app.post('/api/road-status/sync',     requireAuth, requireAdmin, async (req, res) => {
     try {
         if (!Array.isArray(req.body)) return res.status(400).json({ error: "Pričakovan je seznam stanj cest." });
         await roadCol().deleteMany({});
@@ -607,7 +644,7 @@ app.post('/api/stanje-cest/sync',     requireAuth, requireAdmin, async (req, res
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-app.delete('/api/stanje-cest',        requireAuth, requireAdmin, async (req, res) => {
+app.delete('/api/road-status',        requireAuth, requireAdmin, async (req, res) => {
     try {
         const result = await roadCol().deleteMany({});
         await broadcastTrafficEvent("traffic:cleared", { deletedCount: result.deletedCount });
@@ -615,7 +652,7 @@ app.delete('/api/stanje-cest',        requireAuth, requireAdmin, async (req, res
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-app.put('/api/stanje-cest/:id', requireAuth, requireAdmin, async (req, res) => {
+app.put('/api/road-status/:id', requireAuth, requireAdmin, async (req, res) => {
     try {
         const id = String(req.params.id);
         const result = await roadCol().findOneAndUpdate(

@@ -39,8 +39,8 @@ function AppRoutes() {
                 <Route path="/" element={<DashboardPage />} />
                 <Route path="/profil" element={<UserPage />} />
                 <Route path="/parking" element={<ParkingPage />} />
-                <Route path="/stanje-cest" element={<RoadsPage />} />
-                <Route path="/zemljevid" element={<MapPage />} />
+                <Route path="/road-status" element={<RoadsPage />} />
+                <Route path="/map" element={<MapPage />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
             </Route>
         </Routes>
