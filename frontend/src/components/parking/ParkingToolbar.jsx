@@ -33,25 +33,7 @@ export default function ParkingToolbar({
                 <option value="NEAREST">Najbližje</option>
             </select>
 
-            <input
-                value={latitude}
-                onChange={(event) => onLatitudeChange(event.target.value)}
-                placeholder="Lat"
-            />
-
-            <input
-                value={longitude}
-                onChange={(event) => onLongitudeChange(event.target.value)}
-                placeholder="Lon"
-            />
-
-            <input
-                value={radius}
-                onChange={(event) => onRadiusChange(event.target.value)}
-                placeholder="Radij m"
-            />
-
-            <button onClick={onNearby}>V bližini</button>
+           
             <button onClick={onRefresh}>Osveži</button>
             
             {/* Gumb se prikaže samo, če je isAdmin true */}

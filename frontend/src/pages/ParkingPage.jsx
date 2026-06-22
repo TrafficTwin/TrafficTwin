@@ -164,13 +164,6 @@ export default function ParkingPage() {
 
     return (
         <section className="page">
-            <div className="page-header">
-                <div>
-                    <p className="eyebrow">Parkirišča</p>
-                    <h2>Pregled parkirišč</h2>
-                </div>
-            </div>
-
             <ParkingToolbar
                 search={search}
                 onSearchChange={setSearch}

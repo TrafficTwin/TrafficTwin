@@ -7,11 +7,11 @@ import com.fleeksoft.ksoup.nodes.Document
 import com.fleeksoft.ksoup.nodes.Element
 import com.fleeksoft.ksoup.select.Elements
 
-data class GostotaPrometa(
-    val smer: String,
-    val vozilaPerUra: String,
-    val hitrost: String,
-    val razmik: String,
+data class TrafficDensity(
+    val way: String,
+    val vehiclesPerHour: String,
+    val speed: String,
+    val gap: String,
 )
 
 fun parserGostota(){

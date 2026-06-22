@@ -5,6 +5,7 @@ const http = require('http');
 const WebSocket = require('ws');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const { NAP_CONTENTS, importNapRoadContents } = require('./napB2B');
 require('dotenv').config();
 
 const app = express();
@@ -83,7 +84,7 @@ function slugify(value) {
 }
 
 function createRoadId(item, index = 0) {
-    const slug = slugify(`${item.tip ?? ""}-${item.relacija ?? ""}`);
+    const slug = slugify(`${item.tip ?? item.recordType ?? ""}-${item.relacija ?? item.title ?? ""}-${item.sourceKey ?? "manual"}`);
     return slug ? `road-${slug}` : `road-${index}`;
 }
 
@@ -92,20 +93,16 @@ function normalizePoint(point) {
         const latitude = toNumber(point[0]);
         const longitude = toNumber(point[1]);
 
-        if (hasValidCoordinates(latitude, longitude)) {
-            return [latitude, longitude];
-        }
-
+        if (hasValidCoordinates(latitude, longitude)) return [latitude, longitude];
         return null;
     }
 
-    const latitude = toNumber(point.latitude);
-    const longitude = toNumber(point.longitude);
+    if (!point || typeof point !== 'object') return null;
 
-    if (hasValidCoordinates(latitude, longitude)) {
-        return [latitude, longitude];
-    }
+    const latitude = toNumber(point.latitude ?? point.lat);
+    const longitude = toNumber(point.longitude ?? point.lon ?? point.lng);
 
+    if (hasValidCoordinates(latitude, longitude)) return [latitude, longitude];
     return null;
 }
 
@@ -116,9 +113,7 @@ function normalizeRoadCoordinates(item) {
             ? item.polyline
             : [];
 
-    return rawCoordinates
-        .map(normalizePoint)
-        .filter(Boolean);
+    return rawCoordinates.map(normalizePoint).filter(Boolean);
 }
 
 function normalizeRoadDoc(item, index = 0) {
@@ -128,62 +123,25 @@ function normalizeRoadDoc(item, index = 0) {
 
     return {
         id: item.id ?? createRoadId(item, index),
-        tip: item.tip ?? "",
-        relacija: item.relacija ?? "",
-        stanje: item.stanje ?? "",
+        tip: item.tip ?? item.recordType ?? item.sourceName ?? "",
+        relacija: item.relacija ?? item.title ?? "",
+        stanje: item.stanje ?? item.description ?? "",
+        title: item.title ?? item.relacija ?? "",
+        description: item.description ?? item.stanje ?? "",
+        sourceKey: item.sourceKey ?? "manual",
+        sourceName: item.sourceName ?? "Ročni vnos",
+        napCode: item.napCode ?? "",
+        language: item.language ?? "",
+        format: item.format ?? "",
+        category: item.category ?? "",
+        recordType: item.recordType ?? item.tip ?? "",
+        startTime: item.startTime ?? null,
+        endTime: item.endTime ?? null,
         latitude: hasPoint ? latitude : null,
         longitude: hasPoint ? longitude : null,
         coordinates: normalizeRoadCoordinates(item),
-        lastUpdated: new Date()
-    };
-}
-
-function normalizePoint(point) {
-    if (Array.isArray(point)) {
-        const latitude = toNumber(point[0]);
-        const longitude = toNumber(point[1]);
-
-        if (hasValidCoordinates(latitude, longitude)) {
-            return [latitude, longitude];
-        }
-
-        return null;
-    }
-
-    const latitude = toNumber(point.latitude);
-    const longitude = toNumber(point.longitude);
-
-    if (hasValidCoordinates(latitude, longitude)) {
-        return [latitude, longitude];
-    }
-
-    return null;
-}
-
-function normalizeRoadCoordinates(item) {
-    const rawCoordinates = Array.isArray(item.coordinates)
-        ? item.coordinates
-        : Array.isArray(item.polyline)
-            ? item.polyline
-            : [];
-
-    return rawCoordinates
-        .map(normalizePoint)
-        .filter(Boolean);
-}
-
-function normalizeRoadDoc(item) {
-    const latitude = toNumber(item.latitude);
-    const longitude = toNumber(item.longitude);
-    const hasPoint = hasValidCoordinates(latitude, longitude);
-
-    return {
-        tip: item.tip ?? "",
-        relacija: item.relacija ?? "",
-        stanje: item.stanje ?? "",
-        latitude: hasPoint ? latitude : null,
-        longitude: hasPoint ? longitude : null,
-        coordinates: normalizeRoadCoordinates(item),
+        geometryType: item.geometryType ?? null,
+        importedAt: item.importedAt ? new Date(item.importedAt) : null,
         lastUpdated: new Date()
     };
 }
@@ -600,12 +558,82 @@ app.delete('/api/parking',       requireAuth, requireAdmin, async (req, res) => 
 
 // -------------------- STANJE CEST --------------------
 
-app.get('/api/stanje-cest',           requireAuth,              async (req, res) => {
+app.delete('/api/road-status/:id', requireAuth, requireAdmin, async (req, res) => {
+    try {
+        const id = String(req.params.id);
+        const result = await roadCol().findOneAndDelete({ id }, { projection: { _id: 0 } });
+
+        if (!result) {
+            return res.status(404).json({ error: "Cesta z tem ID-jem ne obstaja." });
+        }
+
+        await broadcastTrafficEvent("traffic:deleted", { id });
+        res.json({ message: "Uspešno izbrisano." });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/road-status', requireAuth, requireAdmin, async (req, res) => {
+    try {
+        // Uporabimo tvojo obstoječo funkcijo za normalizacijo podatkov
+        const doc = normalizeRoadDoc(req.body);
+
+        // Vstavimo v bazo
+        await roadCol().insertOne(doc);
+
+        // Obvestimo vse WebSocket kliente, da se je zgodilo nekaj novega
+        await broadcastTrafficEvent("traffic:created", { road: doc });
+
+        res.status(201).json(doc);
+    } catch (err) {
+        if (err.code === 11000) {
+            res.status(409).json({ error: "Cesta s tem ID-jem že obstaja." });
+        } else {
+            res.status(500).json({ error: err.message });
+        }
+    }
+});
+
+app.get('/api/road-status/nap/sources', requireAuth, async (req, res) => {
+    res.json(NAP_CONTENTS);
+});
+
+app.post('/api/road-status/nap/import', requireAuth, requireAdmin, async (req, res) => {
+    try {
+        const result = await importNapRoadContents();
+
+        if (result.count === 0 && result.errors.length > 0) {
+            return res.status(502).json({
+                error: "NAP uvoz ni uspel. Noben vir ni vrnil uporabnih podatkov.",
+                errors: result.errors
+            });
+        }
+
+        await roadCol().deleteMany({});
+        if (result.items.length > 0) await roadCol().insertMany(result.items);
+
+        await broadcastTrafficEvent("traffic:nap-imported", {
+            count: result.items.length,
+            sources: result.sources,
+            errors: result.errors
+        });
+
+        res.json({
+            message: `Uvoženih je ${result.items.length} zapisov iz NAP B2B.`,
+            ...result
+        });
+    } catch (err) {
+        res.status(500).json({ error: "Napaka pri NAP uvozu: " + err.message });
+    }
+});
+
+app.get('/api/road-status',           requireAuth,              async (req, res) => {
     try { res.json(await getRoadSnapshot()); }
     catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-app.post('/api/stanje-cest/sync',     requireAuth, requireAdmin, async (req, res) => {
+app.post('/api/road-status/sync',     requireAuth, requireAdmin, async (req, res) => {
     try {
         if (!Array.isArray(req.body)) return res.status(400).json({ error: "Pričakovan je seznam stanj cest." });
         await roadCol().deleteMany({});
@@ -616,7 +644,7 @@ app.post('/api/stanje-cest/sync',     requireAuth, requireAdmin, async (req, res
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-app.delete('/api/stanje-cest',        requireAuth, requireAdmin, async (req, res) => {
+app.delete('/api/road-status',        requireAuth, requireAdmin, async (req, res) => {
     try {
         const result = await roadCol().deleteMany({});
         await broadcastTrafficEvent("traffic:cleared", { deletedCount: result.deletedCount });
@@ -624,7 +652,7 @@ app.delete('/api/stanje-cest',        requireAuth, requireAdmin, async (req, res
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-app.put('/api/stanje-cest/:id', requireAuth, requireAdmin, async (req, res) => {
+app.put('/api/road-status/:id', requireAuth, requireAdmin, async (req, res) => {
     try {
         const id = String(req.params.id);
         const result = await roadCol().findOneAndUpdate(
@@ -644,7 +672,9 @@ async function startServer() {
         await client.connect();
         db = client.db('traffic_twin');
         await col().createIndex({ locationGeo: '2dsphere' });
-        await roadCol().createIndex({ id: 1 });
+        await roadCol().createIndex({ id: 1 }, { unique: true });
+        await roadCol().createIndex({ sourceKey: 1 });
+        await roadCol().createIndex({ lastUpdated: -1 });
         await userCol().createIndex({ email: 1 }, { unique: true });
         console.log("Uspešno povezan z MongoDB.");
 
@@ -660,3 +690,58 @@ async function startServer() {
 }
 
 startServer();
+// -------------------- UPRAVLJANJE USERJEV (ADMIN) --------------------
+
+app.get('/api/users', requireAuth, requireAdmin, async (req, res) => {
+    try {
+        const users = await userCol().find(
+            {},
+            { projection: { _id: 0, password: 0 } }
+        ).toArray();
+        res.json(users);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.patch('/api/users/:email/role', requireAuth, requireAdmin, async (req, res) => {
+    try {
+        const email = decodeURIComponent(req.params.email).toLowerCase();
+        const { role } = req.body ?? {};
+
+        if (!["user", "admin"].includes(role)) {
+            return res.status(400).json({ error: "Vloga mora biti 'user' ali 'admin'." });
+        }
+
+        const result = await userCol().updateOne({ email }, { $set: { role } });
+
+        if (result.matchedCount === 0) {
+            return res.status(404).json({ error: "Uporabnik ne obstaja." });
+        }
+
+        res.json({ message: "Vloga posodobljena." });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.delete('/api/users/:email', requireAuth, requireAdmin, async (req, res) => {
+    try {
+        const email = decodeURIComponent(req.params.email).toLowerCase();
+        const currentEmail = getCurrentUserEmail(req);
+
+        if (email === currentEmail) {
+            return res.status(400).json({ error: "Ne moreš izbrisati svojega računa." });
+        }
+
+        const result = await userCol().deleteOne({ email });
+
+        if (result.deletedCount === 0) {
+            return res.status(404).json({ error: "Uporabnik ne obstaja." });
+        }
+
+        res.json({ message: "Uporabnik izbrisan." });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});

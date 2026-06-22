@@ -31,13 +31,6 @@ export default function DashboardPage() {
 
     return (
         <section className="page">
-            <div className="page-header">
-                <div>
-                    <p className="eyebrow">Pregled</p>
-                    <h2>Pregledna stran</h2>
-                </div>
-            </div>
-
             <div className="grid">
                 <StatCard
                     label="Parkirišča"
