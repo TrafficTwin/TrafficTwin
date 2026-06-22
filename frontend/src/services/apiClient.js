@@ -28,11 +28,24 @@ export async function apiRequest(path, options = {}) {
         throw new Error("Nimate dovoljenja za to dejanje.");
     }
 
+    const contentType = response.headers.get("content-type") ?? "";
     const text = await response.text();
-    const data = text ? JSON.parse(text) : null;
+    let data = null;
+
+    if (text && contentType.includes("application/json")) {
+        try {
+            data = JSON.parse(text);
+        } catch {
+            data = null;
+        }
+    }
 
     if (!response.ok) {
-        throw new Error(data?.error ?? data?.message ?? `API napaka: ${response.status}`);
+        const fallbackMessage =
+            response.status === 404
+                ? `Pot ${path} ne obstaja na strežniku (404).`
+                : `API napaka: ${response.status}`;
+        throw new Error(data?.error ?? data?.message ?? fallbackMessage);
     }
 
     return data;

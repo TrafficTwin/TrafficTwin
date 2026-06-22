@@ -534,3 +534,182 @@ button.favourite.active {
         grid-template-columns: 1fr;
     }
 }
+
+.custom-select {
+    appearance: none; /* Odstrani privzeti sistemski izgled */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 8px 36px 8px 12px; /* Več prostora na desni za našo puščico */
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #334155;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    
+    /* Dodamo lastno čisto puščico kot ozadje */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19.5 8.25l-7.5 7.5-7.5-7.5'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 14px;
+    
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+/* Stil ob prehodu z miško (Hover) */
+.custom-select:hover {
+    border-color: #cbd5e1;
+    background-color: #f8fafc;
+}
+
+/* Stil ob kliku / fokusu (Focus) */
+.custom-select:focus {
+    outline: none;
+    border-color: #3b82f6; /* Lepa modra barva fokusa */
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+/* Stili za napredno iskanje v polmeru */
+.radius-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #f1f5f9;
+    padding: 6px 12px;
+    border-radius: 12px;
+    font-size: 13px;
+}
+
+.radius-controls input[type="range"] {
+    cursor: pointer;
+    margin-left: 6px;
+}
+
+.info-text {
+    font-size: 11px;
+    color: #64748b;
+}
+
+.toggle-btn {
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+/* Spodnji interaktivni seznam parkirišč */
+.parking-list-section {
+    margin-top: 10px;
+    border-top: 1px solid #e2e8f0;
+    padding-top: 16px;
+}
+
+.parking-list-section h3 {
+    margin: 0 0 12px 0;
+    font-size: 18px;
+    color: #172033;
+}
+
+.parking-horizontal-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 12px;
+    max-height: 250px;
+    overflow-y: auto;
+    padding: 4px;
+}
+
+.parking-mini-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 14px;
+    cursor: pointer;
+    transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+}
+
+.parking-mini-card:hover {
+    transform: translateY(-2px);
+    border-color: #2563eb;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.1);
+}
+
+.card-header-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.card-header-info h4 {
+    margin: 0;
+    font-size: 15px;
+    color: #111827;
+}
+
+.payment-badge {
+    font-size: 11px;
+    background: #f1f5f9;
+    padding: 2px 6px;
+    border-radius: 6px;
+    color: #475569;
+    white-space: nowrap;
+}
+
+.road-card-header {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.road-source-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: #dbeafe;
+    color: #1e40af;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.road-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.road-meta span {
+    background: #f1f5f9;
+    color: #475569;
+    border-radius: 999px;
+    padding: 4px 8px;
+    font-size: 12px;
+}
+
+.road-source-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    background: white;
+    border-radius: 18px;
+    padding: 14px 16px;
+    box-shadow: 0 12px 35px rgba(15, 23, 42, 0.08);
+}
+
+.road-source-summary span {
+    background: #eef2ff;
+    color: #3730a3;
+    border-radius: 999px;
+    padding: 5px 10px;
+    font-size: 13px;
+}
+
+.legend-purple {
+    background: #7c3aed;
+}
+
